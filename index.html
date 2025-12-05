@@ -7,7 +7,7 @@
     <style>
         /* General Reset and Base Styles */
         :root {
-            /* Default Dark Mode */
+            /* Default Dark Mode (Dark Blue Theme) */
             --bg-dark: #1e283a; /* Deep, dark blue-grey */
             --bg-medium: #28384d; /* Slightly lighter for panels */
             --text-light: #e0e6ed; /* Off-white for general text */
@@ -15,7 +15,7 @@
             --accent-hover: #0060c0; /* Darker blue on hover */
             --border-color: #384e68; /* Subtle border color */
             
-            /* Light Mode (Hidden/Optional) */
+            /* Light Mode Variables (optional) */
             --light-bg-dark: #f0f2f5;
             --light-bg-medium: #ffffff;
             --light-text-light: #333333;
@@ -131,17 +131,26 @@
             transform: translateY(-5px);
         }
 
+        /* --- COVER ART STYLING --- */
         .game-image-placeholder {
             width: 100%;
-            height: 150px;
-            background-color: #384e68;
-            display: flex;
+            height: 150px; /* Standard cover height */
+            
+            /* Background image properties for cover art */
+            background-size: cover; 
+            background-position: center;
+            background-repeat: no-repeat;
+            
+            /* Default fallback/placeholder style if image fails to load */
+            background-color: #384e68; 
+            display: flex; 
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
             color: rgba(255, 255, 255, 0.5);
             border-bottom: 1px solid var(--border-color);
         }
+        /* -------------------------- */
 
         .game-info {
             padding: 15px;
@@ -284,21 +293,21 @@
         
         <div id="library-page">
             <header class="header">
-                <h2>Current Game Library</h2>
-            </header>
+                <h2>Game Library</h2> </header>
 
             <div class="game-grid">
                 
                 <div class="game-card">
-                    <div class="game-image-placeholder">Hollow Knight Cover Art</div>
+                    <div class="game-image-placeholder" style="background-image: url('https://store-images.s-microsoft.com/image/apps.24270.13847644057609868.a4a91f76-8d1c-4e19-aa78-f4d27d2818fb.d96146d7-d00a-4db9-ad68-197b2f962a17?q=90&w=480&h=270');">
+                        </div>
                     <div class="game-info">
                         <h3>Hollow Knight</h3>
-                        <a href="StrHK.html" class="launch-btn" target="_blank">Launch</a>
-                    </div>
+                        <a href="StrHK.html" class="launch-btn" target="_blank">Launch</a> </div>
                 </div>
 
                 <div class="game-card">
-                    <div class="game-image-placeholder">Slope Cover Art</div>
+                    <div class="game-image-placeholder" style="background-image: url('https://i.ytimg.com/vi/nmrCOn5xqO0/mqdefault.jpg');">
+                    </div>
                     <div class="game-info">
                         <h3>Slope</h3>
                         <a href="Slope.html" class="launch-btn" target="_blank">Launch</a>
@@ -306,7 +315,8 @@
                 </div>
 
                 <div class="game-card">
-                    <div class="game-image-placeholder">Minecraft 1.12.2 Cover Art</div>
+                    <div class="game-image-placeholder" style="background-image: url('https://img-eshop.cdn.nintendo.net/i/a28a81253e919298beab2295e39a56b7a5140ef15abdb56135655e5c221b2a3a.jpg');">
+                    </div>
                     <div class="game-info">
                         <h3>Minecraft 1.12.2</h3>
                         <a href="mc1122.html" class="launch-btn" target="_blank">Launch</a>
@@ -314,7 +324,8 @@
                 </div>
 
                 <div class="game-card">
-                    <div class="game-image-placeholder">Sans Bad Time Simulator Cover Art</div>
+                    <div class="game-image-placeholder" style="background-image: url('https://static.wikia.nocookie.net/undertale/images/4/4b/MEGALOVANIA_soundtrack.png/revision/latest?cb=20160510142007');">
+                    </div>
                     <div class="game-info">
                         <h3>Sans Bad Time Simulator</h3>
                         <a href="sansfight.html" class="launch-btn" target="_blank">Launch</a>
@@ -322,7 +333,8 @@
                 </div>
 
                 <div class="game-card">
-                    <div class="game-image-placeholder">Undertale Yellow Cover Art</div>
+                    <div class="game-image-placeholder" style="background-image: url('https://www.heypoorplayer.com/wp-content/uploads/2016/12/Undertale-Yellow.jpg');">
+                    </div>
                     <div class="game-info">
                         <h3>Undertale Yellow</h3>
                         <a href="undertaley.html" class="launch-btn" target="_blank">Launch</a>
@@ -330,7 +342,8 @@
                 </div>
 
                 <div class="game-card">
-                    <div class="game-image-placeholder">Geometry Dash Lite Cover Art</div>
+                    <div class="game-image-placeholder" style="background-image: url('https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/322170/header.jpg?t=1703006148');">
+                    </div>
                     <div class="game-info">
                         <h3>Geometry Dash Lite</h3>
                         <a href="gd.html" class="launch-btn" target="_blank">Launch</a>
@@ -338,7 +351,8 @@
                 </div>
 
                 <div class="game-card">
-                    <div class="game-image-placeholder">OSU! Cover Art</div>
+                    <div class="game-image-placeholder" style="background-image: url('https://beam.eyeware.tech/wp-content/uploads/2021/06/maxresdefault-1.jpg');">
+                    </div>
                     <div class="game-info">
                         <h3>OSU!</h3>
                         <a href="osu.html" class="launch-btn" target="_blank">Launch</a>
@@ -346,7 +360,8 @@
                 </div>
                 
                 <div class="game-card">
-                    <div class="game-image-placeholder">Level Devil Cover Art</div>
+                    <div class="game-image-placeholder" style="background-image: url('https://i.ytimg.com/vi/DNtgNFysOtE/sddefault.jpg');">
+                    </div>
                     <div class="game-info">
                         <h3>Level Devil</h3>
                         <a href="leveldevil.html" class="launch-btn" target="_blank">Launch</a>
@@ -403,6 +418,7 @@
         const settingsPage = document.getElementById('settings-page');
         const themeToggle = document.getElementById('theme-toggle');
         const body = document.body;
+        const mainHeader = document.querySelector('.header h2');
 
         // --- 1. Page Switching Logic ---
 
@@ -419,12 +435,11 @@
             if (pageId === 'library') {
                 libraryPage.style.display = 'block';
                 navLibrary.classList.add('active');
-                document.querySelector('.header h2').textContent = 'Your Game Library';
-
+                mainHeader.textContent = 'Game Library'; // Set header text
             } else if (pageId === 'settings') {
                 settingsPage.style.display = 'block';
                 navSettings.classList.add('active');
-                document.querySelector('.header h2').textContent = 'Application Settings';
+                mainHeader.textContent = 'Application Settings'; // Set header text
             }
         }
 
@@ -441,11 +456,9 @@
         
         // --- 2. Theme Switching Logic (Dark/Light) ---
         
-        // Initial setup: The dark blue mode is the default, so the toggle is checked.
-        
         themeToggle.addEventListener('change', function() {
             if (this.checked) {
-                // If checked, ensure it is the default dark blue theme
+                // If checked, revert to the default dark blue theme
                 body.classList.remove('light-theme');
             } else {
                 // If unchecked, apply the light theme class
