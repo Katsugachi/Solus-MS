@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Solus MS - Game Launcher</title>
-    <link rel="icon" type="image/png" href="favicon.ico"> 
+    <link rel="icon" type="image/png" href="favicon.ico">
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
     <style>
         /* General Reset and Base Styles */
@@ -185,8 +185,8 @@
             box-shadow: 0 0 10px var(--accent-blue);
         }
 
-        /* --- Settings Section Styling --- */
-        #settings-page {
+        /* --- Settings/About Section Styling --- */
+        #settings-page, #about-page {
             max-width: 800px;
             margin: 0 auto;
         }
@@ -287,7 +287,7 @@
         <ul class="nav-list">
             <li class="nav-item"><a href="#" id="nav-library" class="active">Library</a></li>
             <li class="nav-item"><a href="#" id="nav-settings">Settings</a></li>
-            <li class="nav-item"><a href="#" id="nav-about">About</a></li> </ul>
+            <li class="nav-item"><a href="#" id="nav-about">About</a></li>
         </ul>
     </div>
 
@@ -295,16 +295,18 @@
         
         <div id="library-page">
             <header class="header">
-                <h2>Game Library</h2> </header>
+                <h2>Game Library</h2>
+            </header>
 
             <div class="game-grid">
                 
                 <div class="game-card">
                     <div class="game-image-placeholder" style="background-image: url('https://store-images.s-microsoft.com/image/apps.24270.13847644057609868.a4a91f76-8d1c-4e19-aa78-f4d27d2818fb.d96146d7-d00a-4db9-ad68-197b2f962a17?q=90&w=480&h=270');">
-                        </div>
+                    </div>
                     <div class="game-info">
                         <h3>Hollow Knight</h3>
-                        <a href="StrHK.html" class="launch-btn" target="_blank">Launch</a> </div>
+                        <a href="StrHK.html" class="launch-btn" target="_blank">Launch</a>
+                    </div>
                 </div>
 
                 <div class="game-card">
@@ -409,16 +411,15 @@
             </div>
             
         </div>
-
-    </div>
-    <div id="about-page" style="display: none;">
+        
+        <div id="about-page" style="display: none;">
             <header class="header">
                 <h2>About Solus MS</h2>
             </header>
             
             <div class="about-content">
                 <p style="margin-bottom: 15px;">
-                    Solus MS is a custom game launcher interface designed by katsugachi on github. 
+                    **Solus MS** is a custom game launcher interface designed by katsugachi on GitHub. It provides a simple, dark-mode platform to access your favorite web-based games quickly and launch them in a full-screen environment.
                 </p>
 
                 <div class="settings-group">
@@ -427,14 +428,36 @@
                         <span>Application Version</span>
                         <strong>1.0.0 (December 2025)</strong>
                     </div>
+                     <div class="setting-item">
+                        <span>Interface Theme</span>
+                        <strong>Deep Blue Dark Mode</strong>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Contact & Support</h3>
+                    <p>
+                        For issues, suggestions, or game additions, please contact the developer via:
+                    </p>
+                    <ul style="list-style-type: disc; margin-left: 20px; padding-top: 5px;">
+                        <li>**GitHub:** katsugachi</li>
+                        <li>**Feedback:** Report bugs or suggest features!</li>
+                    </ul>
+                </div>
+
             </div>
         </div>
-    <script>
+
+    </div> <script>
         // Get references to navigation links and content sections
         const navLibrary = document.getElementById('nav-library');
         const navSettings = document.getElementById('nav-settings');
+        const navAbout = document.getElementById('nav-about'); // ADDED ABOUT NAV REFERENCE
+        
         const libraryPage = document.getElementById('library-page');
         const settingsPage = document.getElementById('settings-page');
+        const aboutPage = document.getElementById('about-page'); // ADDED ABOUT PAGE REFERENCE
+        
         const themeToggle = document.getElementById('theme-toggle');
         const body = document.body;
         const mainHeader = document.querySelector('.header h2');
@@ -445,20 +468,26 @@
             // Hide all pages
             libraryPage.style.display = 'none';
             settingsPage.style.display = 'none';
+            aboutPage.style.display = 'none'; // ADDED ABOUT PAGE HIDE
 
             // Remove active class from all nav items
             navLibrary.classList.remove('active');
             navSettings.classList.remove('active');
+            navAbout.classList.remove('active'); // ADDED ABOUT NAV CLASS REMOVAL
 
-            // Show the requested page and set the active link
+            // Show the requested page and set the active link and header
             if (pageId === 'library') {
                 libraryPage.style.display = 'block';
                 navLibrary.classList.add('active');
-                mainHeader.textContent = 'Game Library'; // Set header text
+                mainHeader.textContent = 'Game Library'; 
             } else if (pageId === 'settings') {
                 settingsPage.style.display = 'block';
                 navSettings.classList.add('active');
-                mainHeader.textContent = 'Application Settings'; // Set header text
+                mainHeader.textContent = 'Application Settings'; 
+            } else if (pageId === 'about') { // ADDED ABOUT PAGE SHOW LOGIC
+                aboutPage.style.display = 'block';
+                navAbout.classList.add('active');
+                mainHeader.textContent = 'About Solus MS';
             }
         }
 
@@ -471,6 +500,12 @@
         navSettings.addEventListener('click', (e) => {
             e.preventDefault();
             showPage('settings');
+        });
+        
+        // ADDED EVENT LISTENER FOR ABOUT PAGE
+        navAbout.addEventListener('click', (e) => {
+            e.preventDefault();
+            showPage('about');
         });
         
         // --- 2. Theme Switching Logic (Dark/Light) ---
