@@ -14,6 +14,7 @@ const staticGames = [
     { name: "Fire And Ice", cover: "https://example.com", url: "games/FireAndIce.html" },
     { name: "Drivemad", cover: "Imgs/Drivemad.png", url: "games/DriveMad.html" },
     { name: "Plants VS Zombies", cover: "Imgs/PVZ.png", url: "games/PvZ.html" },
+    { name: "Shapez", cover: "Imgs/Shapez.png", url: "games/Shapez.html" },
 ];
 
 // ===========================================
