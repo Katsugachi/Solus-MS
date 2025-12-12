@@ -15,7 +15,7 @@ const staticGames = [
     { name: "Drivemad", cover: "Imgs/DriveM.jpeg", url: "games/DriveMad.html" },
     { name: "Plants VS Zombies", cover: "Imgs/PVZ.jpeg", url: "games/PvZ.html" },
     { name: "Shapez", cover: "Imgs/Shapez.jpeg", url: "games/Shapez.html" },
-    { name: "Minesweeper+", cover: "Imgs/MSPlus.png", url: "games/MinesweeperPlus/MinesweeperPlus.html" },
+    { name: "Minesweeper+", cover: "Imgs/MSPlus.jpeg", url: "games/MinesweeperPlus/MinesweeperPlus.html" },
 ];
 
 // ===========================================
