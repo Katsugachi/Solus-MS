@@ -1,16 +1,16 @@
 // Static List of games that came with the launcher (non-IndexedDB)
 const staticGames = [
-    { name: "Hollow Knight", cover: "hk.jpg", url: "StrHK.html" },
+    { name: "Hollow Knight", cover: "hk.jpg", url: "games/StrHK.html" },
     { name: "Slope", cover: "slope.jpg", url: "games/Slope.html" },
-    { name: "Minecraft 1.12.2", cover: "minecraft.jpg", url: "mc1122.html" },
-    { name: "Sans Bad Time Simulator", cover: "undertale.png", url: "sansfight.html" },
-    { name: "Undertale Yellow", cover: "uy.png", url: "undertaley.html" },
-    { name: "Geometry Dash Lite", cover: "gd.png", url: "gd.html" },
-    { name: "Sheepy : A Short Adventure", cover: "sheepy.png", url: "sheepy.html" },
-    { name: "OSU!", cover: "osu.png", url: "osu.html" },
-    { name: "Level Devil", cover: "leveldevil.png", url: "leveldevil.html" },
-    { name: "Run 3", cover: "run-3.png", url: "run3.html" },
-    { name: "Balatro", cover: "balatro.jpg", url: "balatro.html" },
+    { name: "Minecraft 1.12.2", cover: "minecraft.jpg", url: "games/mc1122.html" },
+    { name: "Sans Bad Time Simulator", cover: "undertale.png", url: "games/sansfight.html" },
+    { name: "Undertale Yellow", cover: "uy.png", url: "games/undertaley.html" },
+    { name: "Geometry Dash Lite", cover: "gd.png", url: "games/gd.html" },
+    { name: "Sheepy : A Short Adventure", cover: "sheepy.png", url: "games/sheepy.html" },
+    { name: "OSU!", cover: "osu.png", url: "games/osu.html" },
+    { name: "Level Devil", cover: "leveldevil.png", url: "games/leveldevil.html" },
+    { name: "Run 3", cover: "run-3.png", url: "games/run3.html" },
+    { name: "Balatro", cover: "balatro.jpg", url: "games/balatro.html" },
     { name: "Fire And Ice", cover: "https://example.com", url: "games/FireAndIce.html" },
 ];
 
