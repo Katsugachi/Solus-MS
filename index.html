@@ -33,6 +33,12 @@
             color: var(--light-text-light);
         }
 
+        /* --- REFLECTION CLOAK CLASS --- */
+        .reflection-active {
+            filter: grayscale(1) brightness(0.4) !important;
+            transition: filter 0.4s ease;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -46,7 +52,7 @@
             display: flex;
             min-height: 100vh;
             overflow-x: hidden;
-            transition: background-color 0.3s, color 0.3s; /* Smooth theme transition */
+            transition: background-color 0.3s, color 0.3s, filter 0.3s;
         }
 
         /* --- Sidebar Styling --- */
@@ -133,17 +139,12 @@
             transform: translateY(-5px);
         }
 
-        /* --- COVER ART STYLING --- */
         .game-image-placeholder {
             width: 100%;
-            height: 150px; /* Standard cover height */
-            
-            /* Background image properties for cover art */
+            height: 150px;
             background-size: cover; 
             background-position: center;
             background-repeat: no-repeat;
-            
-            /* Default fallback/placeholder style if image fails to load */
             background-color: #384e68; 
             display: flex; 
             align-items: center;
@@ -152,7 +153,6 @@
             color: rgba(255, 255, 255, 0.5);
             border-bottom: 1px solid var(--border-color);
         }
-        /* -------------------------- */
 
         .game-info {
             padding: 15px;
@@ -162,7 +162,7 @@
             margin-top: 0;
             margin-bottom: 10px;
             font-size: 1.2rem;
-            white-space: nowrap; /* Prevent game title wrap */
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -188,9 +188,8 @@
             box-shadow: 0 0 10px var(--accent-blue);
         }
         
-        /* New Delete Button Style */
         .delete-btn {
-            background-color: #dc3545; /* Red for delete */
+            background-color: #dc3545;
             margin-top: 5px;
         }
 
@@ -204,7 +203,6 @@
             gap: 10px;
         }
 
-        /* --- Settings/About/Add Game Section Styling --- */
         #settings-page, #about-page, #add-game-page {
             max-width: 800px;
             margin: 0 auto;
@@ -225,7 +223,6 @@
             margin-bottom: 15px;
         }
         
-        /* Form Label/Input Styling */
         .form-group {
             margin-bottom: 15px;
         }
@@ -255,10 +252,9 @@
         
         .textarea-input {
             min-height: 150px;
-            font-family: Consolas, monospace; /* Monospace for code */
+            font-family: Consolas, monospace;
         }
 
-        /* File input specific styling (to match the rest) */
         .file-input-container {
             display: block;
             width: 100%;
@@ -299,12 +295,11 @@
             display: none;
         }
 
-        /* Utility classes */
         .hidden {
             display: none !important;
         }
 
-        /* Toggle Switch Styling (from original) */
+        /* Toggle Switch Styling */
         .switch {
             position: relative;
             display: inline-block;
@@ -373,7 +368,8 @@
             <li class="nav-item"><a href="#" id="nav-settings">Settings</a></li>
             <li class="nav-item"><a href="#" id="nav-about">About</a></li>
         </ul>
-    </div>    
+    </div>
+    
     <div class="main-content">
         
         <div id="library-page">
@@ -381,8 +377,7 @@
                 <h2>Game Library</h2>
             </header>
 
-            <div class="game-grid" id="game-library-grid">
-                </div>
+            <div class="game-grid" id="game-library-grid"></div>
             <p id="empty-library-message" style="text-align: center; padding: 50px; color: #7f8fa6;" class="hidden">
                  Your custom library is empty. Add a new game using the "Add New Game" tab!
              </p>
@@ -477,8 +472,17 @@
                 </div>
                 <div class="setting-item">
                     <span>Tab Logo Cloak URL (Change Tab Display Logo)</span>
-                    <input type="text" id="favicon-url-input" class="text-input" placeholder="https://google.com/favicon.ico" style="width: 250px;">
-                    <br><a href="https://katsugachi.github.io/Favicon-Yoinker/" target="_blank" style="color: var(--accent-blue); font-size: 0.85rem; text-decoration: none;">Tab Cloak Logo Fetcher</a>
+                    <div style="text-align: right;">
+                        <input type="text" id="favicon-url-input" class="text-input" placeholder="https://google.com/favicon.ico" style="width: 250px;">
+                        <br><a href="https://katsugachi.github.io/Favicon-Yoinker/" target="_blank" style="color: var(--accent-blue); font-size: 0.85rem; text-decoration: none;">Tab Cloak Logo Fetcher</a>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span>Reflection Cloak (Distance View Protection)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="reflection-cloak-toggle">
+                        <span class="slider"></span>
+                    </label>
                 </div>
             </div>
 
@@ -506,7 +510,7 @@
             
             <div class="about-content">
                 <p style="margin-bottom: 15px;">
-                    Solus MS is a custom browser emulator launching interface designed by katsugachi on GitHub for quickly playing games and launching your own games.<br> <br>For Requests, Reviews And Discussion, Comment In Issues in https://github.com/Katsugachi/Solus-MS
+                    Solus MS is a custom browser emulator launching interface designed by katsugachi on GitHub.<br><br>For Requests, Reviews And Discussion, Comment In Issues in https://github.com/Katsugachi/Solus-MS
                 </p>
 
                 <div class="settings-group">
@@ -527,7 +531,6 @@
     </div> 
     
     <script>
-        // Static List of games that came with the launcher (non-IndexedDB)
         const staticGames = [
             { name: "Hollow Knight", cover: "hk.jpg", url: "StrHK.html" },
             { name: "Slope", cover: "slope.jpg", url: "Slope.html" },
@@ -542,126 +545,70 @@
             { name: "Balatro", cover: "balatro.jpg", url: "balatro.html" },
             { name: "Deltarune", cover: "deltarune.png", url: "deltarune.html" },
             { name: "Mario Kart DS", cover: "mariods.png", url: "mariods.html" },
-
         ];
 
-        // ===========================================
-        // 0. INDEXEDDB SETUP AND UTILITIES
-        // ===========================================
         let db;
         const DB_NAME = 'SolusGamesDB';
         const STORE_NAME = 'customGames';
 
-        // Initialize IndexedDB
         function initDB() {
             return new Promise((resolve, reject) => {
-                // Check for IndexedDB support
                 if (!window.indexedDB) {
-                    console.warn("IndexedDB not supported. Custom game feature disabled.");
                     reject('IndexedDB not supported.');
                     return;
                 }
-
                 const request = indexedDB.open(DB_NAME, 1);
-
-                request.onerror = (event) => {
-                    console.error("IndexedDB error:", event.target.errorCode);
-                    reject('Failed to open IndexedDB.');
-                };
-
                 request.onupgradeneeded = (event) => {
                     db = event.target.result;
-                    const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-                    objectStore.createIndex('name', 'name', { unique: false });
+                    db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
                 };
-
                 request.onsuccess = (event) => {
                     db = event.target.result;
-                    console.log("IndexedDB initialized successfully.");
                     resolve(db);
                 };
+                request.onerror = () => reject('Failed to open IndexedDB.');
             });
         }
         
-        // Save a new game object to IndexedDB
         function saveGame(game) {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([STORE_NAME], 'readwrite');
                 const store = transaction.objectStore(STORE_NAME);
                 const request = store.add(game);
-
-                request.onsuccess = () => {
-                    resolve(request.result); // The ID of the newly added game
-                };
-
-                request.onerror = (event) => {
-                    console.error("Error saving game:", event.target.error);
-                    reject(event.target.error);
-                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject(event.target.error);
             });
         }
         
-        // Get all saved games from IndexedDB
         function getAllGames() {
             return new Promise((resolve, reject) => {
-                if (!db) return resolve([]); // Return empty array if DB isn't ready
-                
+                if (!db) return resolve([]);
                 const transaction = db.transaction([STORE_NAME], 'readonly');
                 const store = transaction.objectStore(STORE_NAME);
                 const request = store.getAll();
-
-                request.onsuccess = () => {
-                    resolve(request.result);
-                };
-
-                request.onerror = (event) => {
-                    console.error("Error fetching games:", event.target.error);
-                    reject(event.target.error);
-                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject(event.target.error);
             });
         }
 
-        // Delete a game by its ID
         function deleteGame(gameId) {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([STORE_NAME], 'readwrite');
                 const store = transaction.objectStore(STORE_NAME);
                 const request = store.delete(gameId);
-
-                request.onsuccess = () => {
-                    resolve();
-                };
-
-                request.onerror = (event) => {
-                    console.error("Error deleting game:", event.target.error);
-                    reject(event.target.error);
-                };
+                request.onsuccess = () => resolve();
+                request.onerror = (event) => reject(event.target.error);
             });
         }
-        
-        // ===========================================
-        // 1. DYNAMIC GAME RENDERING
-        // ===========================================
 
         const gameLibraryGrid = document.getElementById('game-library-grid');
         const emptyMessage = document.getElementById('empty-library-message');
 
-        // This function creates the card HTML element for a game
         function createGameCard(game, isCustom = false) {
             const card = document.createElement('div');
             card.className = 'game-card';
-
             const coverStyle = game.cover ? `background-image: url('${game.cover}');` : '';
-            
-            let launchUrl;
-            if (isCustom) {
-                // Create a secure blob URL for the HTML content
-                const blob = new Blob([game.htmlContent], { type: 'text/html' });
-                launchUrl = URL.createObjectURL(blob);
-            } else {
-                // Static games launch their pre-existing file
-                launchUrl = game.url;
-            }
+            let launchUrl = isCustom ? URL.createObjectURL(new Blob([game.htmlContent], { type: 'text/html' })) : game.url;
 
             card.innerHTML = `
                 <div class="game-image-placeholder" style="${coverStyle}">
@@ -676,55 +623,27 @@
                 </div>
             `;
             
-            // Add the delete event listener for custom games
             if (isCustom) {
                 card.querySelector('.delete-btn').addEventListener('click', async (e) => {
                     const gameId = parseInt(e.target.dataset.gameId);
-                    if (confirm(`Are you sure you want to delete the custom game: ${game.name}?`)) {
-                        try {
-                            await deleteGame(gameId);
-                            loadGames(); // Reload the library
-                        } catch (error) {
-                            alert('Failed to delete game.');
-                        }
+                    if (confirm(`Delete ${game.name}?`)) {
+                        await deleteGame(gameId);
+                        loadGames();
                     }
                 });
             }
-
             return card;
         }
 
-        // Main function to load and display all games (static + custom)
         async function loadGames() {
             gameLibraryGrid.innerHTML = '';
-            
-            // 1. Load Static Games
-            staticGames.forEach(game => {
-                gameLibraryGrid.appendChild(createGameCard(game, false));
-            });
-            
-            // 2. Load Custom Games from IndexedDB
-            let customGames = [];
+            staticGames.forEach(game => gameLibraryGrid.appendChild(createGameCard(game, false)));
             try {
-                customGames = await getAllGames();
-                customGames.forEach(game => {
-                    gameLibraryGrid.appendChild(createGameCard(game, true));
-                });
-            } catch (e) {
-                console.error("Could not load custom games:", e);
-            }
-
-            // Show/hide empty message
-            if (staticGames.length === 0 && customGames.length === 0) {
-                emptyMessage.classList.remove('hidden');
-            } else {
-                emptyMessage.classList.add('hidden');
-            }
+                const customGames = await getAllGames();
+                customGames.forEach(game => gameLibraryGrid.appendChild(createGameCard(game, true)));
+                emptyMessage.classList.toggle('hidden', (staticGames.length + customGames.length) > 0);
+            } catch (e) { console.error(e); }
         }
-
-        // ===========================================
-        // 2. PAGE & THEME SWITCHING 
-        // ===========================================
 
         const navLibrary = document.getElementById('nav-library');
         const navSettings = document.getElementById('nav-settings');
@@ -735,93 +654,34 @@
         const settingsPage = document.getElementById('settings-page');
         const aboutPage = document.getElementById('about-page');
         const addGamePage = document.getElementById('add-game-page');
-
         const themeToggle = document.getElementById('theme-toggle');
-        const body = document.body;
         const mainHeader = document.querySelector('.header h2');
 
         function showPage(pageId) {
-            // Hide all pages
-            libraryPage.style.display = 'none';
-            settingsPage.style.display = 'none';
-            aboutPage.style.display = 'none';
-            addGamePage.style.display = 'none';
+            [libraryPage, settingsPage, aboutPage, addGamePage].forEach(p => p.style.display = 'none');
+            [navLibrary, navSettings, navAbout, navAddGame].forEach(n => n.classList.remove('active'));
 
-            // Remove active class from all nav items
-            navLibrary.classList.remove('active');
-            navSettings.classList.remove('active');
-            navAbout.classList.remove('active');
-            navAddGame.classList.remove('active');
+            const config = {
+                'library': { page: libraryPage, nav: navLibrary, text: 'Game Library', action: loadGames },
+                'settings': { page: settingsPage, nav: navSettings, text: 'Application Settings' },
+                'about': { page: aboutPage, nav: navAbout, text: 'About Solus MS' },
+                'add-game': { page: addGamePage, nav: navAddGame, text: 'Add New Game' }
+            };
 
-            // Show the requested page and set the active link and header
-            let targetPage;
-            let targetNav;
-            let headerText;
-
-            switch (pageId) {
-                case 'library':
-                    targetPage = libraryPage;
-                    targetNav = navLibrary;
-                    headerText = 'Game Library';
-                    loadGames(); // Reload games whenever library is shown
-                    break;
-                case 'settings':
-                    targetPage = settingsPage;
-                    targetNav = navSettings;
-                    headerText = 'Application Settings';
-                    break;
-                case 'about':
-                    targetPage = aboutPage;
-                    targetNav = navAbout;
-                    headerText = 'About Solus MS';
-                    break;
-                case 'add-game': 
-                    targetPage = addGamePage;
-                    targetNav = navAddGame;
-                    headerText = 'Add New Game';
-                    break;
-                default:
-                    return;
-            }
-
-            targetPage.style.display = 'block';
-            targetNav.classList.add('active');
-            mainHeader.textContent = headerText;
+            const target = config[pageId];
+            target.page.style.display = 'block';
+            target.nav.classList.add('active');
+            mainHeader.textContent = target.text;
+            if (target.action) target.action();
         }
 
-        // Attach event listeners for navigation
-        navLibrary.addEventListener('click', (e) => {
-            e.preventDefault();
-            showPage('library');
-        });
+        navLibrary.onclick = (e) => { e.preventDefault(); showPage('library'); };
+        navSettings.onclick = (e) => { e.preventDefault(); showPage('settings'); };
+        navAbout.onclick = (e) => { e.preventDefault(); showPage('about'); };
+        navAddGame.onclick = (e) => { e.preventDefault(); showPage('add-game'); };
 
-        navSettings.addEventListener('click', (e) => {
-            e.preventDefault();
-            showPage('settings');
-        });
+        themeToggle.onchange = function() { document.body.classList.toggle('light-theme', !this.checked); };
         
-        navAbout.addEventListener('click', (e) => {
-            e.preventDefault();
-            showPage('about');
-        });
-        
-        navAddGame.addEventListener('click', (e) => {
-            e.preventDefault();
-            showPage('add-game');
-        });
-
-        // Theme Switching Logic (Dark/Light)
-        themeToggle.addEventListener('change', function() {
-            if (this.checked) {
-                body.classList.remove('light-theme');
-            } else {
-                body.classList.add('light-theme');
-            }
-        });
-        
-        // ===========================================
-        // 3. ADD GAME FORM LOGIC
-        // ===========================================
         const addGameForm = document.getElementById('add-game-form');
         const gameNameInput = document.getElementById('game-name');
         const coverUrlInput = document.getElementById('cover-url');
@@ -835,202 +695,62 @@
         const htmlPasteGroup = document.getElementById('html-paste-group');
         const htmlFileGroup = document.getElementById('html-file-group');
         
-        // Helper function to toggle form visibility based on selected radio
         function setupFormOptions(name, optionGroups) {
             document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
-                radio.closest('.upload-option').addEventListener('click', () => {
-                    // Update active class on visual options
-                    document.querySelectorAll(`.upload-option[data-option^="${name.split('-')[0]}"]`).forEach(opt => {
-                        opt.classList.remove('active-option');
-                    });
+                radio.closest('.upload-option').onclick = () => {
+                    document.querySelectorAll(`.upload-option[data-option^="${name.split('-')[0]}"]`).forEach(o => o.classList.remove('active-option'));
                     radio.closest('.upload-option').classList.add('active-option');
-                    radio.checked = true; // Ensure the radio button is checked
-                    
-                    // Toggle visibility of related input groups
+                    radio.checked = true;
                     for (const [key, element] of Object.entries(optionGroups)) {
-                        if (key.includes(radio.value)) {
-                            element.classList.remove('hidden');
-                        } else {
-                            element.classList.add('hidden');
-                        }
+                        element.classList.toggle('hidden', !key.includes(radio.value));
                     }
-                    
-                    // Clear the state of the non-selected input when switching
-                    if (name === 'cover-source') {
-                        if (radio.value === 'url') {
-                            coverFileInput.value = '';
-                        } else {
-                            coverUrlInput.value = '';
-                        }
-                    } else if (name === 'html-source') {
-                        if (radio.value === 'paste') {
-                            htmlFileInput.value = '';
-                        } else {
-                            htmlCodeInput.value = '';
-                        }
-                    }
-                });
+                };
             });
         }
 
-        // Setup for Cover Art Options
-        setupFormOptions('cover-source', {
-            'url': imageUrlGroup,
-            'file': imageFileGroup
-        });
-
-        // Setup for HTML Content Options
-        setupFormOptions('html-source', {
-            'paste': htmlPasteGroup,
-            'file': htmlFileGroup
-        });
+        setupFormOptions('cover-source', { 'url': imageUrlGroup, 'file': imageFileGroup });
+        setupFormOptions('html-source', { 'paste': htmlPasteGroup, 'file': htmlFileGroup });
         
-        // Helper to read file as a data URL (for images)
-        function readFileAsDataURL(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = (error) => reject(error);
-                reader.readAsDataURL(file);
-            });
-        }
-        
-        // Helper to read file as text (for HTML)
-        function readFileAsText(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = (error) => reject(error);
-                reader.readAsText(file);
-            });
-        }
-        
-        // Handle Form Submission
-        addGameForm.addEventListener('submit', async (e) => {
+        addGameForm.onsubmit = async (e) => {
             e.preventDefault();
-            statusMessage.textContent = 'Saving game...';
-            statusMessage.style.color = '#007bff';
-
             const name = gameNameInput.value.trim();
-            if (!name) {
-                statusMessage.textContent = 'Please enter a game name.';
-                statusMessage.style.color = '#dc3545';
-                return;
-            }
+            if (!name) return alert('Name required');
             
             let coverData = '';
             const coverSource = document.querySelector('input[name="cover-source"]:checked').value;
+            if (coverSource === 'url') coverData = coverUrlInput.value.trim();
+            else if (coverFileInput.files[0]) coverData = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(coverFileInput.files[0]); });
 
-            try {
-                // 1. Get Cover Art Data
-                if (coverSource === 'url') {
-                    coverData = coverUrlInput.value.trim();
-                } else if (coverSource === 'file' && coverFileInput.files.length > 0) {
-                    // Check image file type
-                    if (!coverFileInput.files[0].type.startsWith('image/')) {
-                        statusMessage.textContent = 'Uploaded file is not a valid image.';
-                        statusMessage.style.color = '#dc3545';
-                        return;
-                    }
-                    coverData = await readFileAsDataURL(coverFileInput.files[0]);
-                }
-                
-                // 2. Get HTML Content
-                let htmlContent = '';
-                const htmlSource = document.querySelector('input[name="html-source"]:checked').value;
+            let htmlContent = '';
+            const htmlSource = document.querySelector('input[name="html-source"]:checked').value;
+            if (htmlSource === 'paste') htmlContent = htmlCodeInput.value.trim();
+            else if (htmlFileInput.files[0]) htmlContent = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsText(htmlFileInput.files[0]); });
 
-                if (htmlSource === 'paste') {
-                    htmlContent = htmlCodeInput.value.trim();
-                } else if (htmlSource === 'file' && htmlFileInput.files.length > 0) {
-                    // Ensure it's an HTML file
-                    if (!htmlFileInput.files[0].name.toLowerCase().endsWith('.html') && !htmlFileInput.files[0].name.toLowerCase().endsWith('.htm')) {
-                        statusMessage.textContent = 'Uploaded file must be an .html or .htm file.';
-                        statusMessage.style.color = '#dc3545';
-                        return;
-                    }
-                    htmlContent = await readFileAsText(htmlFileInput.files[0]);
-                }
+            if (!htmlContent) return alert('HTML required');
+            
+            await saveGame({ name, cover: coverData, htmlContent, timestamp: Date.now() });
+            addGameForm.reset();
+            showPage('library');
+        };
 
-                if (!htmlContent) {
-                    statusMessage.textContent = 'HTML content is required.';
-                    statusMessage.style.color = '#dc3545';
-                    return;
-                }
-                
-                // 3. Create Game Object and Save
-                const newGame = {
-                    name: name,
-                    cover: coverData, // This will be a URL or a DataURL string
-                    htmlContent: htmlContent,
-                    timestamp: Date.now()
-                };
-
-                await saveGame(newGame);
-
-                // 4. Success, Cleanup, and Switch Page
-                statusMessage.textContent = `Game "${name}" successfully added! Switching to Library...`;
-                statusMessage.style.color = '#28a745';
-                
-                // Clear all form fields
-                addGameForm.reset(); 
-                
-                // Delay the page switch to show the confirmation message briefly
-                setTimeout(() => {
-                    showPage('library');
-                }, 1000); 
-
-            } catch (error) {
-                console.error("Game saving failed:", error);
-                statusMessage.textContent = `Failed to add game. Error: ${error.message || 'IndexedDB failed or file reading error.'}`;
-                statusMessage.style.color = '#dc3545';
-            }
-        });
-
-        // ===========================================
-        // 4. TAB CLOAKING LOGIC
-        // ===========================================
         const tabNameInput = document.getElementById('tab-name-input');
         const faviconUrlInput = document.getElementById('favicon-url-input');
         const favIconPng = document.getElementById('favicon-png');
         const favIconIco = document.getElementById('favicon-ico');
 
-        tabNameInput.addEventListener('input', (e) => {
-            const newTitle = e.target.value.trim();
-            document.title = newTitle ? newTitle : "Solus MS - Game Launcher";
-        });
+        tabNameInput.oninput = (e) => { document.title = e.target.value.trim() || "Solus MS - Game Launcher"; };
+        faviconUrlInput.oninput = (e) => {
+            const url = e.target.value.trim() || "favicon.ico";
+            favIconPng.href = favIconIco.href = url;
+        };
+        
+        const reflectionToggle = document.getElementById('reflection-cloak-toggle');
+        reflectionToggle.onchange = () => { document.body.classList.toggle('reflection-active', reflectionToggle.checked); };
 
-        faviconUrlInput.addEventListener('input', (e) => {
-            const newFavicon = e.target.value.trim();
-            if (newFavicon) {
-                favIconPng.href = newFavicon;
-                favIconIco.href = newFavicon;
-            } else {
-                favIconPng.href = "favicon.ico";
-                favIconIco.href = "favicon.ico";
-            }
-        });
-
-
-        // ===========================================
-        // 5. INITIALIZATION
-        // ===========================================
-
-        // Run this function when the script starts
         (async function initialize() {
-            try {
-                // 1. Initialize DB
-                await initDB();
-                
-                // 2. Load the default page (Library) and all games
-                showPage('library'); 
-            } catch (error) {
-                // If initialization fails, fall back to showing the library without custom games
-                console.error("Initialization failed:", error);
-                showPage('library');
-            }
+            try { await initDB(); showPage('library'); } 
+            catch (e) { console.error(e); showPage('library'); }
         })();
-
     </script>
-
 </body>
 </html>
