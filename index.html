@@ -396,25 +396,24 @@
                 
                 <h3>Cover Art Source (Optional)</h3>
                 <div class="game-upload-options">
-                    <div class="upload-option active-option" data-option="image-url">
+                    <div id="btn-cover-url" class="upload-option active-option" 
+                         onclick="document.getElementById('cover-url-group').classList.remove('hidden'); 
+                                  document.getElementById('cover-file-group').classList.add('hidden'); 
+                                  document.getElementById('cover-file').value='';
+                                  this.classList.add('active-option');
+                                  document.getElementById('btn-cover-file').classList.remove('active-option');">
                         <label>Image Link Address</label>
                         <input type="radio" name="cover-source" id="cover-url-radio" value="url" class="radio-hidden" checked>
                     </div>
-                    <div class="upload-option" data-option="image-file">
+
+                    <div id="btn-cover-file" class="upload-option" 
+                         onclick="document.getElementById('cover-url-group').classList.add('hidden'); 
+                                  document.getElementById('cover-file-group').classList.remove('hidden'); 
+                                  document.getElementById('cover-url').value='';
+                                  this.classList.add('active-option');
+                                  document.getElementById('btn-cover-url').classList.remove('active-option');">
                         <label>Upload Image File</label>
                         <input type="radio" name="cover-source" id="cover-file-radio" value="file" class="radio-hidden">
-                    </div>
-                </div>
-                
-                <div class="form-group" id="image-url-group">
-                    <label for="cover-url">Cover Image URL</label>
-                    <input type="url" id="cover-url" class="text-input" placeholder="https://example.com/game-cover.png">
-                </div>
-                
-                <div class="form-group hidden" id="image-file-group">
-                    <label for="cover-file">Upload Cover Image</label>
-                    <div class="file-input-container">
-                        <input type="file" id="cover-file" accept="image/*">
                     </div>
                 </div>
 
