@@ -93,6 +93,7 @@
         .nav-item a:hover {
             background-color: var(--bg-dark);
         }
+
         .nav-item a.active {
             background-color: var(--accent-blue);
             color: white;
@@ -395,24 +396,25 @@
                 
                 <h3>Cover Art Source (Optional)</h3>
                 <div class="game-upload-options">
-                    <div id="btn-cover-url" class="upload-option active-option" 
-                         onclick="document.getElementById('cover-url-group').classList.remove('hidden'); 
-                                  document.getElementById('cover-file-group').classList.add('hidden'); 
-                                  document.getElementById('cover-file').value='';
-                                  this.classList.add('active-option');
-                                  document.getElementById('btn-cover-file').classList.remove('active-option');">
+                    <div class="upload-option active-option" data-option="image-url">
                         <label>Image Link Address</label>
                         <input type="radio" name="cover-source" id="cover-url-radio" value="url" class="radio-hidden" checked>
                     </div>
-
-                    <div id="btn-cover-file" class="upload-option" 
-                         onclick="document.getElementById('cover-url-group').classList.add('hidden'); 
-                                  document.getElementById('cover-file-group').classList.remove('hidden'); 
-                                  document.getElementById('cover-url').value='';
-                                  this.classList.add('active-option');
-                                  document.getElementById('btn-cover-url').classList.remove('active-option');">
+                    <div class="upload-option" data-option="image-file">
                         <label>Upload Image File</label>
                         <input type="radio" name="cover-source" id="cover-file-radio" value="file" class="radio-hidden">
+                    </div>
+                </div>
+                
+                <div class="form-group" id="image-url-group">
+                    <label for="cover-url">Cover Image URL</label>
+                    <input type="url" id="cover-url" class="text-input" placeholder="https://example.com/game-cover.png">
+                </div>
+                
+                <div class="form-group hidden" id="image-file-group">
+                    <label for="cover-file">Upload Cover Image</label>
+                    <div class="file-input-container">
+                        <input type="file" id="cover-file" accept="image/*">
                     </div>
                 </div>
 
@@ -673,18 +675,13 @@
             if (target.action) target.action();
         }
 
- // Navigation Event Listeners
         navLibrary.onclick = (e) => { e.preventDefault(); showPage('library'); };
         navSettings.onclick = (e) => { e.preventDefault(); showPage('settings'); };
         navAbout.onclick = (e) => { e.preventDefault(); showPage('about'); };
         navAddGame.onclick = (e) => { e.preventDefault(); showPage('add-game'); };
 
-        // Theme Toggle
-        themeToggle.onchange = function() { 
-            document.body.classList.toggle('light-theme', !this.checked); 
-        };
+        themeToggle.onchange = function() { document.body.classList.toggle('light-theme', !this.checked); };
         
-        // Form Elements & Groups
         const addGameForm = document.getElementById('add-game-form');
         const gameNameInput = document.getElementById('game-name');
         const coverUrlInput = document.getElementById('cover-url');
@@ -698,39 +695,19 @@
         const htmlPasteGroup = document.getElementById('html-paste-group');
         const htmlFileGroup = document.getElementById('html-file-group');
         
-        /**
-         * Logic for toggling between different upload options (URL vs File)
-         */
         function setupFormOptions(name, optionGroups) {
             document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
-                const optionDiv = radio.closest('.upload-option');
-                
-                optionDiv.onclick = () => {
-                    // 1. Update Radio State
+                radio.closest('.upload-option').onclick = () => {
+                    document.querySelectorAll(`.upload-option[data-option^="${name.split('-')[0]}"]`).forEach(o => o.classList.remove('active-option'));
+                    radio.closest('.upload-option').classList.add('active-option');
                     radio.checked = true;
-
-                    // 2. Update Visual "Active" Classes
-                    const allOptions = document.querySelectorAll(`input[name="${name}"]`);
-                    allOptions.forEach(r => r.closest('.upload-option').classList.remove('active-option'));
-                    optionDiv.classList.add('active-option');
-
-                    // 3. Toggle Group Visibility
                     for (const [key, element] of Object.entries(optionGroups)) {
-                        if (key.includes(radio.value)) {
-                            element.classList.remove('hidden');
-                        } else {
-                            element.classList.add('hidden');
-                            
-                            // Clear input of hidden group to prevent accidental data submission
-                            const input = element.querySelector('input, textarea');
-                            if (input) input.value = '';
-                        }
+                        element.classList.toggle('hidden', !key.includes(radio.value));
                     }
                 };
             });
         }
 
-        // Initialize form toggles with correct mappings
         setupFormOptions('cover-source', { 'url': imageUrlGroup, 'file': imageFileGroup });
         setupFormOptions('html-source', { 'paste': htmlPasteGroup, 'file': htmlFileGroup });
         
