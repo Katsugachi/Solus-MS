@@ -696,20 +696,34 @@
         const htmlFileGroup = document.getElementById('html-file-group');
         
         function setupFormOptions(name, optionGroups) {
-            document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
-                radio.closest('.upload-option').onclick = () => {
-                    document.querySelectorAll(`.upload-option[data-option^="${name.split('-')[0]}"]`).forEach(o => o.classList.remove('active-option'));
-                    radio.closest('.upload-option').classList.add('active-option');
-                    radio.checked = true;
-                    for (const [key, element] of Object.entries(optionGroups)) {
-                        element.classList.toggle('hidden', !key.includes(radio.value));
-                    }
-                };
-            });
-        }
+    document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+        radio.closest('.upload-option').onclick = () => {
+            // 1. Remove active class from all buttons in this group
+            const groupPrefix = name.split('-')[0];
+            document.querySelectorAll(`.upload-option[data-option^="${groupPrefix}"]`)
+                    .forEach(o => o.classList.remove('active-option'));
 
-        setupFormOptions('cover-source', { 'url': imageUrlGroup, 'file': imageFileGroup });
-        setupFormOptions('html-source', { 'paste': htmlPasteGroup, 'file': htmlFileGroup });
+            // 2. Set active class and check the radio
+            radio.closest('.upload-option').classList.add('active-option');
+            radio.checked = true;
+
+            // 3. Show the correct input and hide/CLEAR the others
+            for (const [key, element] of Object.entries(optionGroups)) {
+                const isTarget = key.includes(radio.value);
+                element.classList.toggle('hidden', !isTarget);
+                
+                // If we are hiding this input, clear its value so it doesn't submit
+                if (!isTarget) {
+                    const input = element.querySelector('input, textarea');
+                    if (input) input.value = '';
+                }
+            }
+        };
+    });
+}
+
+setupFormOptions('cover-source', { 'url': imageUrlGroup, 'file': imageFileGroup });
+setupFormOptions('html-source', { 'paste': htmlPasteGroup, 'file': htmlFileGroup });
         
         addGameForm.onsubmit = async (e) => {
             e.preventDefault();
