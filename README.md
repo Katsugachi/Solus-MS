@@ -1,4 +1,4 @@
-# Solus-MS <img src="favicon.ico" height="30" style="vertical-align: -20%;">
+# Solus-MS &nbsp; <img src="favicon.ico" height="30" style="vertical-align: -20%;">
 A launcher for various programs and games including Hollow Knight, Slope, Minecraft 1.12.2 etc... <br>
 Written entirely in html (The launcher, not the games) <br>
 Opens games in a new tab, use f11 to full screen. <br>
