@@ -1,4 +1,4 @@
-# Solus-MS <img src="https://github.com/Katsugachi/Solus-MS/blob/main/favicon.ico" height="32"> Solus MS
+# Solus-MS   <img src="https://github.com/Katsugachi/Solus-MS/blob/main/favicon.ico" height="32">
 A launcher for various programs and games including Hollow Knight, Slope, Minecraft 1.12.2 etc... <br>
 Written entirely in html (The launcher, not the games) <br>
 Opens games in a new tab, use f11 to full screen. <br>
