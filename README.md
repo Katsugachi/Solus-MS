@@ -11,6 +11,11 @@ Credit: bog (truffled.lol) for most ports
 > 3. Open up command prompt (`⊞ Win` + `R`  Type in cmd then press `Enter`)
 > 4. Run `cd PATH HERE` - Go to the file where you extracted it and right click > `Copy As Path`
 > 5. Finally launch it with the command `py -m http.server 9000` and visit <http://localhost:9000/>
+## About
+- Launch all games in a new tab, full screen.
+- Tab Cloaking allows for disguising as anything
+- Reflection Cloaking additionally makes it difficult to see from an angle, while allowing the user to see behind them through the reflection in the screen.
+- Clean, simple to use UI
 ## Details 
 ![GitHub Repo Size](https://img.shields.io/github/repo-size/Katsugachi/Solus-MS) <br>
 ![GitHub License](https://img.shields.io/github/license/Katsugachi/Solus-MS) <br>
