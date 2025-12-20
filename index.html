@@ -356,6 +356,18 @@
         .setting-item:first-child {
             border-top: none;
         }
+        /* Fix for About Page links to match text color */
+
+        .about-content a {
+            color: var(--text-light);
+            text-decoration: underline;
+            text-decoration-color: var(--accent-blue);
+            transition: color 0.2s;
+        }
+        
+        .about-content a:hover {
+            color: var(--accent-blue);
+        }
     </style>
 </head>
 <body>
