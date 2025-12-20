@@ -11,3 +11,8 @@ Credit: bog (truffled.lol) for most ports
 > 3. Open up command prompt (`⊞ Win` + `R`  Type in cmd then press `Enter`)
 > 4. Run `cd PATH HERE` - Go to the file where you extracted it and right click > `Copy As Path`
 > 5. Finally launch it with the command `py -m http.server 9000` and visit <http://localhost:9000/>
+## Details 
+![GitHub Repo Size](https://img.shields.io/github/repo-size/Katsugachi/Solus-MS) <br>
+![GitHub License](https://img.shields.io/github/license/Katsugachi/Solus-MS) <br>
+![GitHub Last Commit](https://img.shields.io/github/last-commit/Katsugachi/Solus-MS) <br>
+![GitHub Stars](https://img.shields.io/github/stars/Katsugachi/Solus-MS?style=social)
