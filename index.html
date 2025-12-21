@@ -476,7 +476,7 @@
                 </div>
                 <div class="setting-item">
                     <span>Sidebar Width (px)</span>
-                    <input type="number" class="text-input" value="250" min="200" max="400">
+                    <input type="number" class="text-input" value="250" min="200" max="400" style="width: 100px;">
                 </div>
                 <div class="setting-item">
                     <span>Tab Cloak (Change Tab Display Name)</span>
@@ -490,7 +490,14 @@
                     </div>
                 </div>
                 <div class="setting-item">
-                    <span>Reflection Cloak (Distance View Protection & Backwards 180 Degrees Vision)</span>
+                    <span>Invisibility Cloak (Hidden When Not On Tab)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="invisibility-cloak-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <span>Reflection Cloak (Distance View Protection)</span>
                     <label class="switch">
                         <input type="checkbox" id="reflection-cloak-toggle">
                         <span class="slider"></span>
@@ -755,6 +762,50 @@
             const url = e.target.value.trim() || "favicon.ico";
             favIconPng.href = favIconIco.href = url;
         };
+        
+        // Invisibility Cloak Implementation
+        let invisibilityEnabled = false;
+        let originalTitle = document.title;
+        let originalFavicon = favIconPng.href;
+        
+        const invisibilityToggle = document.getElementById('invisibility-cloak-toggle');
+        
+        function handleInvisibility() {
+            if (!invisibilityEnabled) return;
+            
+            if (document.hidden) {
+                document.title = '\u3164';
+                favIconPng.href = favIconIco.href = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            } else {
+                document.title = originalTitle;
+                favIconPng.href = favIconIco.href = originalFavicon;
+            }
+        }
+        
+        invisibilityToggle.onchange = function() {
+            invisibilityEnabled = this.checked;
+            
+            if (invisibilityEnabled) {
+                originalTitle = document.title;
+                originalFavicon = favIconPng.href;
+                document.addEventListener('visibilitychange', handleInvisibility);
+                if (document.hidden) {
+                    handleInvisibility();
+                }
+            } else {
+                document.removeEventListener('visibilitychange', handleInvisibility);
+                document.title = originalTitle;
+                favIconPng.href = favIconIco.href = originalFavicon;
+            }
+        };
+        
+        tabNameInput.addEventListener('input', () => {
+            originalTitle = tabNameInput.value.trim() || "Solus MS - Game Launcher";
+        });
+        
+        faviconUrlInput.addEventListener('input', () => {
+            originalFavicon = faviconUrlInput.value.trim() || "favicon.ico";
+        });
         
         const reflectionToggle = document.getElementById('reflection-cloak-toggle');
         reflectionToggle.onchange = () => { document.body.classList.toggle('reflection-active', reflectionToggle.checked); };
