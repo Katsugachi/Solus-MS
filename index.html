@@ -408,11 +408,11 @@
                 
                 <h3>Cover Art Source (Optional)</h3>
                 <div class="game-upload-options">
-                    <div class="upload-option active-option" data-option="image-url">
+                    <div class="upload-option active-option" data-option="cover-url">
                         <label>Image Link Address</label>
                         <input type="radio" name="cover-source" id="cover-url-radio" value="url" class="radio-hidden" checked>
                     </div>
-                    <div class="upload-option" data-option="image-file">
+                    <div class="upload-option" data-option="cover-file">
                         <label>Upload Image File</label>
                         <input type="radio" name="cover-source" id="cover-file-radio" value="file" class="radio-hidden">
                     </div>
@@ -490,18 +490,33 @@
                     </div>
                 </div>
                 <div class="setting-item">
-                    <span>Invisibility Cloak (Hide When Not On Tab)</span>
+                    <span>Invisibility Cloak (Hide Tab When Unfocused)</span>
                     <label class="switch">
                         <input type="checkbox" id="invisibility-cloak-toggle">
                         <span class="slider"></span>
                     </label>
                 </div>
                 <div class="setting-item">
-                    <span>Reflection Cloak (Distance View Protection & Backwards 180 Degrees Vision)</span>
+                    <span>Panic Key (Press ESC to Quick-Switch Tab)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="panic-key-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item" id="panic-url-setting" style="display: none;">
+                    <span>Panic Switch URL</span>
+                    <input type="text" id="panic-url-input" class="text-input" placeholder="https://classroom.google.com" style="width: 250px;">
+                </div>
+                <div class="setting-item">
+                    <span>Reflection Cloak (Distance View Protection)</span>
                     <label class="switch">
                         <input type="checkbox" id="reflection-cloak-toggle">
                         <span class="slider"></span>
                     </label>
+                </div>
+                <div class="setting-item">
+                    <span>URL & History Cloaking (about:blank, Untrackable)</span>
+                    <button class="launch-btn" id="aboutblank-btn" style="width: 200px; padding: 8px;">Open Blank Cloak</button>
                 </div>
             </div>
 
@@ -514,7 +529,7 @@
                 <div class="setting-item">
                     <span>Enable Game Overlay</span>
                     <label class="switch">
-                        <input type="checkbox">
+                        <input type="checkbox" id="game-overlay-toggle">
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -622,6 +637,7 @@
 
         const gameLibraryGrid = document.getElementById('game-library-grid');
         const emptyMessage = document.getElementById('empty-library-message');
+        let gameOverlayEnabled = false;
 
         function createGameCard(game, isCustom = false) {
             const card = document.createElement('div');
@@ -636,11 +652,19 @@
                 <div class="game-info">
                     <h3>${game.name}</h3>
                     <div class="action-group">
-                        <a href="${launchUrl}" class="launch-btn" target="_blank">Launch</a>
+                        <a href="${launchUrl}" class="launch-btn" data-game-url="${launchUrl}" target="_blank">Launch</a>
                         ${isCustom ? `<button class="launch-btn delete-btn" data-game-id="${game.id}" style="flex-grow: 0.5;">Delete</button>` : ''}
                     </div>
                 </div>
             `;
+            
+            const launchBtn = card.querySelector('.launch-btn');
+            launchBtn.addEventListener('click', (e) => {
+                if (gameOverlayEnabled) {
+                    e.preventDefault();
+                    window.location.href = launchUrl;
+                }
+            });
             
             if (isCustom) {
                 card.querySelector('.delete-btn').addEventListener('click', async (e) => {
@@ -717,7 +741,9 @@
         function setupFormOptions(name, optionGroups) {
             document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
                 radio.closest('.upload-option').onclick = () => {
-                    document.querySelectorAll(`.upload-option[data-option^="${name.split('-')[0]}"]`).forEach(o => o.classList.remove('active-option'));
+                    radio.closest('.game-upload-options').querySelectorAll('.upload-option').forEach(o => {
+                        o.classList.remove('active-option');
+                    });
                     radio.closest('.upload-option').classList.add('active-option');
                     radio.checked = true;
                     for (const [key, element] of Object.entries(optionGroups)) {
@@ -809,6 +835,51 @@
         
         const reflectionToggle = document.getElementById('reflection-cloak-toggle');
         reflectionToggle.onchange = () => { document.body.classList.toggle('reflection-active', reflectionToggle.checked); };
+        
+        const gameOverlayToggle = document.getElementById('game-overlay-toggle');
+        gameOverlayToggle.onchange = function() {
+            gameOverlayEnabled = this.checked;
+        };
+        
+        // Panic Key Implementation
+        let panicKeyEnabled = false;
+        let panicUrl = 'https://classroom.google.com';
+        
+        const panicKeyToggle = document.getElementById('panic-key-toggle');
+        const panicUrlSetting = document.getElementById('panic-url-setting');
+        const panicUrlInput = document.getElementById('panic-url-input');
+        
+        panicKeyToggle.onchange = function() {
+            panicKeyEnabled = this.checked;
+            panicUrlSetting.style.display = this.checked ? 'flex' : 'none';
+        };
+        
+        panicUrlInput.oninput = function() {
+            panicUrl = this.value.trim() || 'https://classroom.google.com';
+        };
+        
+        document.addEventListener('keydown', (e) => {
+            if (panicKeyEnabled && e.key === 'Escape') {
+                e.preventDefault();
+                window.location.href = panicUrl;
+            }
+        });
+        
+        // about:blank Cloaking
+        const aboutBlankBtn = document.getElementById('aboutblank-btn');
+        aboutBlankBtn.onclick = function() {
+            const win = window.open();
+            win.document.body.style.margin = '0';
+            win.document.body.style.height = '100vh';
+            const iframe = win.document.createElement('iframe');
+            iframe.style.border = 'none';
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.margin = '0';
+            iframe.src = 'https://katsugachi.github.io/Solus-MS/';
+            win.document.body.appendChild(iframe);
+            window.location.replace('https://www.google.com');
+        };
 
         (async function initialize() {
             try { await initDB(); showPage('library'); } 
