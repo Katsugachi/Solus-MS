@@ -14,8 +14,11 @@ Credit: bog (truffled.lol) for most ports
 ## About
 - Launch all games in a new tab, full screen.
 - Tab Cloaking allows for disguising as anything
-- Reflection Cloaking makes it difficult to see from an angle,
+- Reflection Cloaking makes it difficult to see from distance
 - Reflection Cloaking also allows the user to see behind them through the reflection on their screen.
+- Invisibility Cloaking makes tab virtually invisible when unfocused
+- Panic Key for quick escape and clutch
+- URL Cloaking for about:blank allows opening in an untrackable site with no description
 - Clean, simple to use UI
 ## Details 
 ![GitHub Repo Size](https://img.shields.io/github/repo-size/Katsugachi/Solus-MS) <br>
