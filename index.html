@@ -497,15 +497,33 @@
                     </label>
                 </div>
                 <div class="setting-item">
-                    <span>Panic Key (Press ESC to Quick-Switch Tab)</span>
+                    <span>Panic Key (Press ESC to Quick-Switch)</span>
                     <label class="switch">
                         <input type="checkbox" id="panic-key-toggle">
                         <span class="slider"></span>
                     </label>
                 </div>
-                <div class="setting-item" id="panic-url-setting" style="display: none;">
-                    <span>Panic Switch URL</span>
-                    <input type="text" id="panic-url-input" class="text-input" placeholder="https://classroom.google.com" style="width: 250px;">
+                <div id="panic-settings-group" style="display: none; flex-direction: column; gap: 10px; padding-left: 20px; margin-top: 10px;">
+                    <div class="setting-item" style="border-top: none; padding-top: 0;">
+                        <span>Panic Mode</span>
+                        <select id="panic-mode-select" class="text-input" style="width: 200px;">
+                            <option value="redirect">Simple Redirect</option>
+                            <option value="background">Background Tab Switch</option>
+                        </select>
+                    </div>
+                    <div class="setting-item" id="panic-redirect-setting" style="border-top: none;">
+                        <span>Redirect URL</span>
+                        <input type="text" id="panic-url-input" class="text-input" placeholder="https://classroom.google.com" style="width: 250px;">
+                    </div>
+                    <div class="setting-item" id="panic-background-setting" style="display: none; border-top: none;">
+                        <span>Background Tab URL</span>
+                        <input type="text" id="panic-background-url" class="text-input" placeholder="https://classroom.google.com" style="width: 250px;">
+                        <button class="launch-btn" id="open-background-tab" style="width: 150px; padding: 8px; margin-left: 10px;">Open Background Tab</button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span>about:blank Cloak (Hide in Blank Page)</span>
+                    <button class="launch-btn" id="aboutblank-btn" style="width: 200px; padding: 8px;">Open in about:blank</button>
                 </div>
                 <div class="setting-item">
                     <span>Reflection Cloak (Distance View Protection)</span>
@@ -513,10 +531,6 @@
                         <input type="checkbox" id="reflection-cloak-toggle">
                         <span class="slider"></span>
                     </label>
-                </div>
-                <div class="setting-item">
-                    <span>URL & History Cloaking (about:blank, Untrackable)</span>
-                    <button class="launch-btn" id="aboutblank-btn" style="width: 200px; padding: 8px;">Open Blank Cloak</button>
                 </div>
             </div>
 
@@ -532,6 +546,21 @@
                         <input type="checkbox" id="game-overlay-toggle">
                         <span class="slider"></span>
                     </label>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <h3>Data Management</h3>
+                <div class="setting-item">
+                    <span>Export Library Data</span>
+                    <button class="launch-btn" id="export-btn" style="width: 200px; padding: 8px;">Download Backup</button>
+                </div>
+                <div class="setting-item">
+                    <span>Import Library Data</span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="file" id="import-input" accept=".json" style="display: none;">
+                        <button class="launch-btn" id="import-btn" style="width: 200px; padding: 8px;">Upload Backup</button>
+                    </div>
                 </div>
             </div>
             
@@ -843,25 +872,76 @@
         
         // Panic Key Implementation
         let panicKeyEnabled = false;
+        let panicMode = 'redirect';
         let panicUrl = 'https://classroom.google.com';
+        let backgroundTab = null;
         
         const panicKeyToggle = document.getElementById('panic-key-toggle');
-        const panicUrlSetting = document.getElementById('panic-url-setting');
+        const panicSettingsGroup = document.getElementById('panic-settings-group');
+        const panicModeSelect = document.getElementById('panic-mode-select');
+        const panicRedirectSetting = document.getElementById('panic-redirect-setting');
+        const panicBackgroundSetting = document.getElementById('panic-background-setting');
         const panicUrlInput = document.getElementById('panic-url-input');
+        const panicBackgroundUrl = document.getElementById('panic-background-url');
+        const openBackgroundTabBtn = document.getElementById('open-background-tab');
         
         panicKeyToggle.onchange = function() {
             panicKeyEnabled = this.checked;
-            panicUrlSetting.style.display = this.checked ? 'flex' : 'none';
+            panicSettingsGroup.style.display = this.checked ? 'flex' : 'none';
+        };
+        
+        panicModeSelect.onchange = function() {
+            panicMode = this.value;
+            if (panicMode === 'redirect') {
+                panicRedirectSetting.style.display = 'flex';
+                panicBackgroundSetting.style.display = 'none';
+            } else {
+                panicRedirectSetting.style.display = 'none';
+                panicBackgroundSetting.style.display = 'flex';
+            }
         };
         
         panicUrlInput.oninput = function() {
             panicUrl = this.value.trim() || 'https://classroom.google.com';
         };
         
+        panicBackgroundUrl.oninput = function() {
+            panicUrl = this.value.trim() || 'https://classroom.google.com';
+        };
+        
+        openBackgroundTabBtn.onclick = function() {
+            const url = panicBackgroundUrl.value.trim() || 'https://classroom.google.com';
+            
+            backgroundTab = window.open(url, '_blank');
+            
+            if (backgroundTab) {
+                window.focus();
+                openBackgroundTabBtn.textContent = 'Tab Ready ✓';
+                openBackgroundTabBtn.style.background = '#28a745';
+            } else {
+                openBackgroundTabBtn.textContent = 'Pop-up Blocked!';
+                openBackgroundTabBtn.style.background = '#dc3545';
+                setTimeout(() => {
+                    openBackgroundTabBtn.textContent = 'Open Background Tab';
+                    openBackgroundTabBtn.style.background = '';
+                }, 2000);
+            }
+        };
+        
         document.addEventListener('keydown', (e) => {
             if (panicKeyEnabled && e.key === 'Escape') {
                 e.preventDefault();
-                window.location.href = panicUrl;
+                
+                if (panicMode === 'redirect') {
+                    window.location.href = panicUrl;
+                } else if (panicMode === 'background') {
+                    if (backgroundTab) {
+                        try {
+                            backgroundTab.focus();
+                        } catch(e) {}
+                    }
+                    window.close();
+                }
             }
         });
         
@@ -879,6 +959,53 @@
             iframe.src = 'https://katsugachi.github.io/Solus-MS/';
             win.document.body.appendChild(iframe);
             window.location.replace('https://www.google.com');
+        };
+
+        // EXPORT/IMPORT FUNCTIONALITY
+        const exportBtn = document.getElementById('export-btn');
+        const importBtn = document.getElementById('import-btn');
+        const importInput = document.getElementById('import-input');
+
+        exportBtn.onclick = async function() {
+            try {
+                const games = await getAllGames();
+                if (games.length === 0) {
+                    alert('No custom games to export.');
+                    return;
+                }
+                const blob = new Blob([JSON.stringify(games, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `solus-backup-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error(e);
+                alert('Export failed');
+            }
+        };
+
+        importBtn.onclick = () => importInput.click();
+
+        importInput.onchange = async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const games = JSON.parse(text);
+                if (!Array.isArray(games)) throw new Error('Invalid format');
+                for (const game of games) {
+                    const { id, ...data } = game;
+                    await saveGame(data);
+                }
+                alert(`Imported ${games.length} games`);
+                loadGames();
+                importInput.value = '';
+            } catch (e) {
+                console.error(e);
+                alert('Import failed');
+            }
         };
 
         (async function initialize() {
