@@ -32,8 +32,61 @@
             --border-color: var(--light-border-color);
             color: var(--light-text-light);
         }
+        /* --- DARK GLASS THEME --- */
+        .glass-theme {
+            --bg-dark: #050a12; 
+            --bg-medium: rgba(15, 23, 42, 0.4); 
+            --text-light: #ffffff; 
+            --accent-blue: #007aff;
+            --accent-hover: #0a84ff;
+            --border-color: rgba(255, 255, 255, 0.15);
+            
+            /* Liquid Depth Background */
+            background: 
+                radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.3) 0, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.2) 0, transparent 50%),
+                #050a12;
+            background-attachment: fixed;
+            color: #ffffff;
+        }
 
-        /* --- REFLECTION CLOAK CLASS --- */
+        /* Thick Frosting & Specular Borders */
+        .glass-theme .game-card, 
+        .glass-theme .settings-group, 
+        .glass-theme .sidebar {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(40px) saturate(200%) brightness(0.8);
+            -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 8px 32px 0 rgba(0, 0, 0, 0.8),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05); /* Specular edge */
+        }
+
+        /* High-Definition Text */
+        .glass-theme h1, .glass-theme h2, .glass-theme h3 {
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            letter-spacing: 1px;
+        }
+
+        /* Interactive Elements */
+        .glass-theme .nav-item a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: brightness(1.2);
+        }
+
+        .glass-theme .nav-item a.active {
+            background: rgba(0, 122, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);
+        }
+
+        .glass-theme .text-input, 
+        .glass-theme .textarea-input {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }       /* --- REFLECTION CLOAK CLASS --- */
         .reflection-active {
             filter: grayscale(1) brightness(0.4) !important;
             transition: filter 0.4s ease;
@@ -55,6 +108,29 @@
             transition: background-color 0.3s, color 0.3s, filter 0.3s;
         }
 
+        select.text-input {
+            appearance: none;
+            background: var(--bg-medium);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* Glass-specific Overrides */
+        .glass-theme select.text-input {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-theme select.text-input option {
+            background-color: #1a1a1a; /* Darker dropdown menu for readability */
+            color: white;
+        }
         /* --- Sidebar Styling --- */
         .sidebar {
             width: 250px;
@@ -544,22 +620,6 @@
                     </label>
                 </div>
             </div>
-
-            <div class="settings-group">
-                <h3>Data Management</h3>
-                <div class="setting-item">
-                    <span>Export Library Data</span>
-                    <button class="launch-btn" id="export-btn" style="width: 200px; padding: 8px;">Download Backup</button>
-                </div>
-                <div class="setting-item">
-                    <span>Import Library Data</span>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="file" id="import-input" accept=".json" style="display: none;">
-                        <button class="launch-btn" id="import-btn" style="width: 200px; padding: 8px;">Upload Backup</button>
-                    </div>
-                </div>
-            </div>
-            
         </div>
         
         <div id="about-page" style="display: none;">
@@ -576,12 +636,16 @@
                     <h3>Version Details</h3>
                     <div class="setting-item">
                         <span>Application Version</span>
-                        <strong>1.7.2 (Game & Feature Update 2)</strong>
+                        <strong>2.1.1 (Major Visual Update)</strong>
                     </div>
-                     <div class="setting-item">
-                        <span>Interface Theme</span>
-                        <strong>Deep Blue Dark Mode</strong>
-                    </div>
+                    <div class="setting-item">
+                      <span>Interface Theme</span>
+                      <select id="theme-select" class="text-input" style="width: 200px;">
+                          <option value="dark">Deep Blue (Dark)</option>
+                          <option value="light">Light Mode</option>
+                          <option value="glass">Glass</option>
+                      </select>
+                     </div>
                      <div class="setting-item">
                         <strong>Alternate Links - Most To Least Updated Top To Bottom</strong>
                     </div>
@@ -785,8 +849,28 @@
         navAbout.onclick = (e) => { e.preventDefault(); showPage('about'); };
         navAddGame.onclick = (e) => { e.preventDefault(); showPage('add-game'); };
 
-        themeToggle.onchange = function() { document.body.classList.toggle('light-theme', !this.checked); };
-        
+        const themeSelect = document.getElementById('theme-select');
+
+        themeSelect.onchange = function() {
+            const theme = this.value;
+            
+            // Clear existing theme classes
+            document.body.classList.remove('light-theme', 'glass-theme');
+            
+            if (theme === 'light') {
+                document.body.classList.add('light-theme');
+            } else if (theme === 'glass') {
+                document.body.classList.add('glass-theme');
+            }
+            // 'dark' is the default CSS state, so no class is added
+        };
+
+        // Sync "About" page version details with current theme
+        themeSelect.addEventListener('change', () => {
+            const themeName = themeSelect.options[themeSelect.selectedIndex].text;
+            const themeDetail = document.querySelector('.about-content .settings-group strong:nth-of-type(1)');
+            if (themeDetail) themeDetail.textContent = themeName;
+        });        
         const addGameForm = document.getElementById('add-game-form');
         const gameNameInput = document.getElementById('game-name');
         const coverUrlInput = document.getElementById('cover-url');
@@ -993,57 +1077,16 @@
             win.document.body.appendChild(iframe);
             window.location.replace('https://www.google.com');
         };
-
-        // EXPORT/IMPORT FUNCTIONALITY
-        const exportBtn = document.getElementById('export-btn');
-        const importBtn = document.getElementById('import-btn');
-        const importInput = document.getElementById('import-input');
-
-        exportBtn.onclick = async function() {
-            try {
-                const games = await getAllGames();
-                if (games.length === 0) {
-                    alert('No custom games to export.');
-                    return;
-                }
-                const blob = new Blob([JSON.stringify(games, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `solus-backup-${Date.now()}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-            } catch (e) {
-                console.error(e);
-                alert('Export failed');
-            }
-        };
-
-        importBtn.onclick = () => importInput.click();
-
-        importInput.onchange = async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            try {
-                const text = await file.text();
-                const games = JSON.parse(text);
-                if (!Array.isArray(games)) throw new Error('Invalid format');
-                for (const game of games) {
-                    const { id, ...data } = game;
-                    await saveGame(data);
-                }
-                alert(`Imported ${games.length} games`);
-                loadGames();
-                importInput.value = '';
-            } catch (e) {
-                console.error(e);
-                alert('Import failed');
-            }
-        };
-
         (async function initialize() {
-            try { await initDB(); showPage('library'); } 
-            catch (e) { console.error(e); showPage('library'); }
+            try { 
+                await initDB(); 
+                // Wait for DB to be ready before showing the page
+                showPage('library'); 
+            } catch (e) { 
+                console.error("DB Initialization failed:", e); 
+                // Fallback to show the page even if DB fails
+                showPage('library'); 
+            }
         })();
     </script>
 </body>
