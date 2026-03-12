@@ -444,9 +444,167 @@
         .about-content a:hover {
             color: var(--accent-blue);
         }
+
+        /* ===================== */
+        /* --- MODAL OVERLAY --- */
+        /* ===================== */
+        #warning-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #warning-modal {
+            background-color: var(--bg-medium);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,255,255,0.04);
+            padding: 35px 40px;
+            max-width: 600px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #warning-modal h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 14px;
+        }
+
+        #warning-modal p {
+            font-size: 0.97rem;
+            line-height: 1.7;
+            color: var(--text-light);
+        }
+
+        #warning-modal .form-group label {
+            font-size: 0.88rem;
+            color: var(--text-light);
+            opacity: 0.75;
+            margin-bottom: 8px;
+        }
+
+        #modal-ack-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #modal-ack-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        #modal-ack-input.input-error {
+            border-color: #dc3545;
+            box-shadow: 0 0 6px rgba(220, 53, 69, 0.4);
+        }
+
+        #modal-error-msg {
+            font-size: 0.85rem;
+            color: #e05c6a;
+            min-height: 1.1em;
+            transition: opacity 0.2s;
+        }
+
+        .modal-btn-row {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        #modal-cancel-btn {
+            padding: 10px 22px;
+            background-color: #ffffff;
+            color: #1e283a;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: bold;
+            transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.25), 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        #modal-cancel-btn:hover {
+            background-color: #e8edf2;
+            box-shadow: 0 0 16px rgba(255, 255, 255, 0.45), 0 0 32px rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        #modal-cancel-btn:active {
+            transform: translateY(0px);
+        }
+
+        #modal-submit-btn {
+            padding: 10px 22px;
+            background-color: #1a2535;
+            color: rgba(180, 190, 200, 0.45);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: bold;
+            transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+            box-shadow: none;
+        }
+
+        #modal-submit-btn:hover {
+            background-color: #223044;
+            color: rgba(200, 210, 220, 0.6);
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.4);
+        }
     </style>
 </head>
 <body>
+
+    <!-- ======================== -->
+    <!-- ACKNOWLEDGMENT MODAL     -->
+    <!-- ======================== -->
+    <div id="warning-modal-overlay">
+        <div id="warning-modal">
+            <h2>⚠ Exam &amp; Assessment Period Notice</h2>
+            <p>
+                This current time period is an <strong>exam/assessment period</strong> and as much as I love how much that you all use my site, you should be focusing on studying for these.
+                If you are sure that you have completed sufficient work and would still like to proceed, type the phrase below into the box and press <strong>Submit</strong>.
+                Or press <strong>Cancel</strong> and it will close this tab so you can focus on work.
+            </p>
+            <div class="form-group">
+                <label for="modal-ack-input">Type:</label>
+                <canvas id="modal-phrase-canvas" style="display:block; width:100%; border-radius:4px; margin-bottom:10px; user-select:none; -webkit-user-select:none;"></canvas>
+                <input
+                    type="text"
+                    id="modal-ack-input"
+                    autocomplete="off"
+                    spellcheck="false"
+                    placeholder="Type the acknowledgment phrase here…"
+                />
+            </div>
+            <div id="modal-error-msg"></div>
+            <div class="modal-btn-row">
+                <button id="modal-cancel-btn">Cancel</button>
+                <button id="modal-submit-btn">Submit</button>
+            </div>
+        </div>
+    </div>
 
     <div class="sidebar">
         <h1>Solus MS</h1>
@@ -678,6 +836,117 @@
     </div> 
     
     <script>
+        // ============================
+        // ACKNOWLEDGMENT MODAL LOGIC
+        // ============================
+        const REQUIRED_PHRASE = "I Acknowledge That This Is Not A Good Use Of My Time And Would Still Like To Continue";
+
+        const modalOverlay   = document.getElementById('warning-modal-overlay');
+        const modalAckInput  = document.getElementById('modal-ack-input');
+        const modalErrorMsg  = document.getElementById('modal-error-msg');
+        const modalSubmitBtn = document.getElementById('modal-submit-btn');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+
+        // Render the phrase on a canvas so it cannot be selected or copy-pasted
+        function renderPhraseCanvas() {
+            const canvas = document.getElementById('modal-phrase-canvas');
+            const phrase = 'I Acknowledge That This Is Not A Good Use Of My Time And Would Still Like To Continue';
+            const isDark = !document.body.classList.contains('light-theme');
+            const bgColor   = isDark ? '#1e283a' : '#f0f2f5';
+            const textColor = isDark ? '#e0e6ed' : '#333333';
+            const font      = "italic 15px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+
+            // Measure text to size the canvas correctly
+            const tempCtx = document.createElement('canvas').getContext('2d');
+            tempCtx.font = font;
+            const maxWidth = (document.getElementById('warning-modal').clientWidth || 520) - 80;
+            const words = phrase.split(' ');
+            const lineHeight = 22;
+            const lines = [];
+            let current = '';
+            for (const word of words) {
+                const test = current ? current + ' ' + word : word;
+                if (tempCtx.measureText(test).width > maxWidth && current) {
+                    lines.push(current);
+                    current = word;
+                } else {
+                    current = test;
+                }
+            }
+            if (current) lines.push(current);
+
+            const padding = 12;
+            canvas.width  = maxWidth + padding * 2;
+            canvas.height = lines.length * lineHeight + padding * 2;
+            canvas.style.height = canvas.height + 'px';
+
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = bgColor;
+            ctx.beginPath();
+            ctx.roundRect(0, 0, canvas.width, canvas.height, 4);
+            ctx.fill();
+
+            // Subtle border
+            ctx.strokeStyle = isDark ? '#384e68' : '#cccccc';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(0.5, 0.5, canvas.width - 1, canvas.height - 1, 4);
+            ctx.stroke();
+
+            ctx.font = font;
+            ctx.fillStyle = textColor;
+            ctx.textBaseline = 'top';
+            lines.forEach((line, i) => {
+                ctx.fillText(line, padding, padding + i * lineHeight);
+            });
+        }
+
+        // Re-render on load and on theme change
+        window.addEventListener('load', renderPhraseCanvas);
+        window.addEventListener('resize', renderPhraseCanvas);
+
+        // Prevent any interaction with the page behind the modal
+        modalOverlay.addEventListener('click', (e) => { e.stopPropagation(); });
+        document.addEventListener('keydown', (e) => {
+            if (modalOverlay.style.display !== 'none' && e.key === 'Escape') {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+            }
+        }, true);
+
+        modalSubmitBtn.addEventListener('click', () => {
+            const typed = modalAckInput.value.trim().toLowerCase();
+            if (typed === REQUIRED_PHRASE) {
+                modalOverlay.style.display = 'none';
+                modalErrorMsg.textContent  = '';
+                modalAckInput.classList.remove('input-error');
+            } else {
+                modalAckInput.classList.add('input-error');
+                modalErrorMsg.textContent = 'Acknowledgement Incorrectly Typed. Try Again.';
+                modalAckInput.focus();
+            }
+        });
+
+        // Allow pressing Enter to submit
+        modalAckInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') modalSubmitBtn.click();
+        });
+
+        // Clear error styling on input
+        modalAckInput.addEventListener('input', () => {
+            modalAckInput.classList.remove('input-error');
+            modalErrorMsg.textContent = '';
+        });
+
+        modalCancelBtn.addEventListener('click', () => {
+            window.close();
+            // Fallback if window.close() is blocked by the browser
+            document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Segoe UI,sans-serif;font-size:1.2rem;color:#e0e6ed;background:#1e283a;">You may now close this tab.</div>';
+        });
+
+        // ============================
+        // ORIGINAL SITE LOGIC BELOW
+        // ============================
         const staticGames = [
             { name: "Hollow Knight", cover: "hk.jpg", url: "StrHK.html" },
             { name: "Minecraft 1.21.6", cover: "minecraft.jpg", url: "mc1122.html" },
@@ -819,7 +1088,6 @@
         const settingsPage = document.getElementById('settings-page');
         const aboutPage = document.getElementById('about-page');
         const addGamePage = document.getElementById('add-game-page');
-        const themeToggle = document.getElementById('theme-toggle');
         const mainHeader = document.querySelector('.header h2');
 
         function showPage(pageId) {
@@ -849,19 +1117,15 @@
 
         themeSelect.onchange = function() {
             const theme = this.value;
-            
-            // Clear existing theme classes
             document.body.classList.remove('light-theme', 'glass-theme');
-            
             if (theme === 'light') {
                 document.body.classList.add('light-theme');
             } else if (theme === 'glass') {
                 document.body.classList.add('glass-theme');
             }
-            // 'dark' is the default CSS state, so no class is added
+            renderPhraseCanvas();
         };
 
-        // Sync "About" page version details with current theme
         themeSelect.addEventListener('change', () => {
             const themeName = themeSelect.options[themeSelect.selectedIndex].text;
             const themeDetail = document.querySelector('.about-content .settings-group strong:nth-of-type(1)');
@@ -931,7 +1195,6 @@
             favIconPng.href = favIconIco.href = url;
         };
         
-        // Invisibility Cloak Implementation
         let invisibilityEnabled = false;
         let originalTitle = document.title;
         let originalFavicon = favIconPng.href;
@@ -940,7 +1203,6 @@
         
         function handleInvisibility() {
             if (!invisibilityEnabled) return;
-            
             if (document.hidden) {
                 document.title = '\u3164';
                 favIconPng.href = favIconIco.href = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -952,14 +1214,11 @@
         
         invisibilityToggle.onchange = function() {
             invisibilityEnabled = this.checked;
-            
             if (invisibilityEnabled) {
                 originalTitle = document.title;
                 originalFavicon = favIconPng.href;
                 document.addEventListener('visibilitychange', handleInvisibility);
-                if (document.hidden) {
-                    handleInvisibility();
-                }
+                if (document.hidden) handleInvisibility();
             } else {
                 document.removeEventListener('visibilitychange', handleInvisibility);
                 document.title = originalTitle;
@@ -979,11 +1238,8 @@
         reflectionToggle.onchange = () => { document.body.classList.toggle('reflection-active', reflectionToggle.checked); };
         
         const gameOverlayToggle = document.getElementById('game-overlay-toggle');
-        gameOverlayToggle.onchange = function() {
-            gameOverlayEnabled = this.checked;
-        };
+        gameOverlayToggle.onchange = function() { gameOverlayEnabled = this.checked; };
         
-        // Panic Key Implementation
         let panicKeyEnabled = false;
         let panicMode = 'redirect';
         let panicUrl = 'https://classroom.google.com';
@@ -1014,19 +1270,12 @@
             }
         };
         
-        panicUrlInput.oninput = function() {
-            panicUrl = this.value.trim() || 'https://classroom.google.com';
-        };
-        
-        panicBackgroundUrl.oninput = function() {
-            panicUrl = this.value.trim() || 'https://classroom.google.com';
-        };
+        panicUrlInput.oninput = function() { panicUrl = this.value.trim() || 'https://classroom.google.com'; };
+        panicBackgroundUrl.oninput = function() { panicUrl = this.value.trim() || 'https://classroom.google.com'; };
         
         openBackgroundTabBtn.onclick = function() {
             const url = panicBackgroundUrl.value.trim() || 'https://classroom.google.com';
-            
             backgroundTab = window.open(url, '_blank');
-            
             if (backgroundTab) {
                 window.focus();
                 openBackgroundTabBtn.textContent = 'Tab Ready ✓';
@@ -1042,23 +1291,18 @@
         };
         
         document.addEventListener('keydown', (e) => {
-            if (panicKeyEnabled && e.key === 'Escape') {
+            // Only fire panic key if modal is dismissed
+            if (modalOverlay.style.display === 'none' && panicKeyEnabled && e.key === 'Escape') {
                 e.preventDefault();
-                
                 if (panicMode === 'redirect') {
                     window.location.href = panicUrl;
                 } else if (panicMode === 'background') {
-                    if (backgroundTab) {
-                        try {
-                            backgroundTab.focus();
-                        } catch(e) {}
-                    }
+                    if (backgroundTab) { try { backgroundTab.focus(); } catch(e) {} }
                     window.close();
                 }
             }
         });
         
-        // about:blank Cloaking
         const aboutBlankBtn = document.getElementById('aboutblank-btn');
         aboutBlankBtn.onclick = function() {
             const win = window.open();
@@ -1073,14 +1317,13 @@
             win.document.body.appendChild(iframe);
             window.location.replace('https://www.google.com');
         };
+
         (async function initialize() {
             try { 
                 await initDB(); 
-                // Wait for DB to be ready before showing the page
                 showPage('library'); 
             } catch (e) { 
                 console.error("DB Initialization failed:", e); 
-                // Fallback to show the page even if DB fails
                 showPage('library'); 
             }
         })();
