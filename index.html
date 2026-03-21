@@ -785,10 +785,55 @@
            
             const launchBtn = card.querySelector('.launch-btn');
             launchBtn.addEventListener('click', (e) => {
-                if (gameOverlayEnabled) {
-                    e.preventDefault();
-                    window.location.href = launchUrl;
-                }
+                e.preventDefault();
+                const tabName = localStorage.getItem('solus_tabName') || 'Solus MS - Game Launcher';
+                const favicon = localStorage.getItem('solus_favicon') || 'favicon.ico';
+                const invisEnabled = localStorage.getItem('solus_invis') === 'true';
+                const panicEnabled = localStorage.getItem('solus_panicEnabled') === 'true';
+                const savedPanicMode = localStorage.getItem('solus_panicMode') || 'redirect';
+                const savedPanicUrl = localStorage.getItem('solus_panicUrl') || 'https://classroom.google.com';
+
+                const win = window.open('', '_blank');
+                if (!win) return;
+                win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>${tabName}</title>
+  <link rel="icon" id="tab-favicon" href="${favicon}">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { width:100vw; height:100vh; overflow:hidden; background:#000; }
+    iframe { width:100%; height:100%; border:none; display:block; }
+  </style>
+</head>
+<body>
+  <iframe src="${launchUrl}" allowfullscreen allow="autoplay; fullscreen"></iframe>
+  <script>
+    ${invisEnabled ? `
+    const _origTitle = ${JSON.stringify(tabName)};
+    const _origFav = ${JSON.stringify(favicon)};
+    const _favEl = document.getElementById('tab-favicon');
+    const _blank = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        document.title = '\\u3164';
+        _favEl.href = _blank;
+      } else {
+        document.title = _origTitle;
+        _favEl.href = _origFav;
+      }
+    });` : ''}
+    ${panicEnabled ? `
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        window.location.href = ${JSON.stringify(savedPanicUrl)};
+      }
+    });` : ''}
+  <\/script>
+</body>
+</html>`);
+                win.document.close();
             });
            
             if (isCustom) {
@@ -928,10 +973,44 @@
         const favIconPng = document.getElementById('favicon-png');
         const favIconIco = document.getElementById('favicon-ico');
 
-        tabNameInput.oninput = (e) => { document.title = e.target.value.trim() || "Solus MS - Game Launcher"; };
+        // Restore saved settings on load
+        (function restoreSettings() {
+            const savedTab = localStorage.getItem('solus_tabName');
+            const savedFav = localStorage.getItem('solus_favicon');
+            const savedInvis = localStorage.getItem('solus_invis') === 'true';
+            const savedReflection = localStorage.getItem('solus_reflection') === 'true';
+            const savedPanicEnabled = localStorage.getItem('solus_panicEnabled') === 'true';
+            const savedPanicMode = localStorage.getItem('solus_panicMode') || 'redirect';
+            const savedPanicUrl = localStorage.getItem('solus_panicUrl') || '';
+
+            if (savedTab) { tabNameInput.value = savedTab; document.title = savedTab; }
+            if (savedFav) { faviconUrlInput.value = savedFav; favIconPng.href = favIconIco.href = savedFav; }
+            if (savedInvis) { document.getElementById('invisibility-cloak-toggle').checked = true; }
+            if (savedReflection) { document.getElementById('reflection-cloak-toggle').checked = true; document.body.classList.add('reflection-active'); }
+            if (savedPanicEnabled) {
+                document.getElementById('panic-key-toggle').checked = true;
+                document.getElementById('panic-settings-group').style.display = 'flex';
+            }
+            if (savedPanicMode !== 'redirect') {
+                document.getElementById('panic-mode-select').value = savedPanicMode;
+                document.getElementById('panic-redirect-setting').style.display = 'none';
+                document.getElementById('panic-background-setting').style.display = 'flex';
+            }
+            if (savedPanicUrl) {
+                document.getElementById('panic-url-input').value = savedPanicUrl;
+                document.getElementById('panic-background-url').value = savedPanicUrl;
+            }
+        })();
+
+        tabNameInput.oninput = (e) => {
+            const val = e.target.value.trim() || "Solus MS - Game Launcher";
+            document.title = val;
+            localStorage.setItem('solus_tabName', val);
+        };
         faviconUrlInput.oninput = (e) => {
             const url = e.target.value.trim() || "favicon.ico";
             favIconPng.href = favIconIco.href = url;
+            localStorage.setItem('solus_favicon', url);
         };
        
         // Invisibility Cloak Implementation
@@ -955,6 +1034,7 @@
        
         invisibilityToggle.onchange = function() {
             invisibilityEnabled = this.checked;
+            localStorage.setItem('solus_invis', this.checked);
            
             if (invisibilityEnabled) {
                 originalTitle = document.title;
@@ -979,7 +1059,10 @@
         });
        
         const reflectionToggle = document.getElementById('reflection-cloak-toggle');
-        reflectionToggle.onchange = () => { document.body.classList.toggle('reflection-active', reflectionToggle.checked); };
+        reflectionToggle.onchange = () => {
+            document.body.classList.toggle('reflection-active', reflectionToggle.checked);
+            localStorage.setItem('solus_reflection', reflectionToggle.checked);
+        };
        
         const gameOverlayToggle = document.getElementById('game-overlay-toggle');
         gameOverlayToggle.onchange = function() {
@@ -1004,10 +1087,12 @@
         panicKeyToggle.onchange = function() {
             panicKeyEnabled = this.checked;
             panicSettingsGroup.style.display = this.checked ? 'flex' : 'none';
+            localStorage.setItem('solus_panicEnabled', this.checked);
         };
        
         panicModeSelect.onchange = function() {
             panicMode = this.value;
+            localStorage.setItem('solus_panicMode', panicMode);
             if (panicMode === 'redirect') {
                 panicRedirectSetting.style.display = 'flex';
                 panicBackgroundSetting.style.display = 'none';
@@ -1019,10 +1104,12 @@
        
         panicUrlInput.oninput = function() {
             panicUrl = this.value.trim() || 'https://classroom.google.com';
+            localStorage.setItem('solus_panicUrl', panicUrl);
         };
        
         panicBackgroundUrl.oninput = function() {
             panicUrl = this.value.trim() || 'https://classroom.google.com';
+            localStorage.setItem('solus_panicUrl', panicUrl);
         };
        
         openBackgroundTabBtn.onclick = function() {
