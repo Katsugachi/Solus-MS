@@ -30,3 +30,7 @@ Credit: bog/aukak and gn-math (bread) for main ports
 ![GitHub License](https://img.shields.io/github/license/Katsugachi/Solus-MS) <br>
 ![GitHub Last Commit](https://img.shields.io/github/last-commit/Katsugachi/Solus-MS) <br>
 ![GitHub Stars](https://img.shields.io/github/stars/Katsugachi/Solus-MS?style=social)
+
+## Scramjet
+A side project to unblock the internet. If a site isnt loading, press reload
+<br><br>[https://scramjet-backend-d0t8.onrender.com/](https://scramjet-backend-d0t8.onrender.com/)
