@@ -2,7 +2,7 @@
 An open source launcher for various programs and games including Hollow Knight, Slope, Minecraft 1.12.2 etc... <br>
 Written entirely in html (The launcher, not the games) <br>
 Opens games in a new tab, use f11 to full screen. <br>
-Credit: bog/aukak and gn-math (bread) for main ports <br>
+Credit: bog/aukak and gn-math (bread) for main ports. I made a good few as well :) <br>
 Notice: Sorry about bugs, I am aware of a few and I'm working hard to fix them! Thanks!
 ## Launch Solus MS In Browser
 [![Launch](https://img.shields.io/badge/Launch-Solus%20MS%20%E2%86%92-blue?style=for-the-badge)](https://katsugachi.github.io/Solus-MS/)
