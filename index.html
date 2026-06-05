@@ -1251,12 +1251,7 @@
             localStorage.setItem('solus_theme', this.value);
         };
 
-        // Sync "About" page version details with current theme
-        themeSelect.addEventListener('change', () => {
-            const themeName = themeSelect.options[themeSelect.selectedIndex].text;
-            const themeDetail = document.querySelector('.about-content .settings-group strong:nth-of-type(1)');
-            if (themeDetail) themeDetail.textContent = themeName;
-        });        
+        // Sync "About" page version details with current theme       
         const addGameForm = document.getElementById('add-game-form');
         const gameNameInput = document.getElementById('game-name');
         const coverUrlInput = document.getElementById('cover-url');
