@@ -8,7 +8,7 @@ Credit: bog/aukak and gn-math (bread) for main ports. I made a good few as well 
 Notice: Sorry about bugs, I am aware of a few and I'm working hard to fix them! Thanks! <br><br>
 **Scroll For Full Site Explanation**
 ## Disclaimer & Terms of Use
-This website is intended for personal entertainment use only. Users are entirely responsible for complying with their local institution's policies, rules, and network guidelines (including schools, universities, and workplaces). The creators and hosts of this website accept no liability for any disciplinary actions, restricted access, or consequences resulting from unauthorized use during school or work hours. By continuing to use this site, you agree that you are doing so at your own risk and responsibility. 
+This website is intended for personal entertainment use only. We do not endorse the usage of this site outside of home. Users are entirely responsible for complying with their local institution's policies, rules, and network guidelines (including schools, universities, and workplaces). The creators and hosts of this website accept no liability for any disciplinary actions, restricted access, or consequences resulting from unauthorized use during school or work hours. By continuing to use this site, you agree that you are doing so at your own risk and responsibility. 
 
 ## Launch Solus MS In Browser
 [![Launch](https://img.shields.io/badge/Launch-Solus%20MS%20%E2%86%92-blue?style=for-the-badge)](https://katsugachi.github.io/Solus-MS/)
