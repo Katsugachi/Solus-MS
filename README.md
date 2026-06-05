@@ -41,12 +41,12 @@ Opening in about:blank opens a new tab and injects the site via a blob: url to b
 <br><br>
 Game overlay simply opens games on top of your tab instead of in the background. **No features or actions on the user end will break any games, they are isolated**. Stats check when you press to open a game and when you close that tab it logs the date it was closed and calculates how long it was open for. Invisibility cloak simply checks whether the tab is focused (open) or unfocused (closed) and then when unfocused, changes the favicon and title to be nothing. (U+3164, an invisible unicode character is used as a placeholder). Adding games simply saves your html fetcher into localstorage and opens it in another tab when you launch it. The HTML file download is a html file that opens the site in a local iframe and therefore will still require internet to work, the reason it looks like a bunch of numbers is because its been converted to be javascript unescape, placed in script tags. <br><br>
 
-Whenever a new feature is added, code is altered or a bug is fixed, the following benchmark checklist must all pass. <br><br>
-- > 3 games launch and do not freeze while loading before the game starts up as intended <br>
+Whenever a new feature is added, code is altered or a bug is fixed, the following checks must all pass before being pushed. <br><br>
+- Greater than 3 random games launch and do not freeze while loading before the game starts up as intended <br>
 - All settings and configurations are consistent accross the launcher window and games opened by the launcher <br>
 - URLs opened are opened with about:blank and the blob:url is injected properly, with no blank screens <br>
 - CSS is consistent and not broken in any tabs and toggles are correctly coloured and styled <br>
-- > 60% of games are functioning as intended <br>
+- Greater than 60% of games are functioning as intended <br>
 - Statistics minutes are accurate to ± 1 minute <br>
 - Invisibility cloak removes favicon and tab title when tab is unfocused <br>
 - Reflection cloak changes CSS to be darkened in all 3 themes <br>
