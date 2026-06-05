@@ -4,7 +4,7 @@ An open source launcher for various programs and games including Hollow Knight, 
 Written entirely in html (The launcher, not the games)<br>
 Opens games in a new tab, use fn + f11 to full screen. <br>
 Credit: bog/aukak and gn-math (bread) for main ports. I made a good few as well :) <br>
-Notice: Sorry about bugs, I am aware of a few and I'm working hard to fix them! Thanks! 
+Notice: Sorry about bugs, I am aware of a few and I'm working hard to fix them! Thanks! <br><br>
 **Scroll For Full Site Explanation**
 ## Disclaimer & Terms of Use
 This website is intended for personal entertainment use only. Users are entirely responsible for complying with their local institution's policies, rules, and network guidelines (including schools, universities, and workplaces). The creators and hosts of this website accept no liability for any disciplinary actions, restricted access, or consequences resulting from unauthorized use during school or work hours. By continuing to use this site, you agree that you are doing so at your own risk and responsibility. 
