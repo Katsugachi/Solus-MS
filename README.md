@@ -1,9 +1,13 @@
 # <img src="favicon.ico" height="30" style="vertical-align: -20%;"> &nbsp; Solus-MS 
+
 An open source launcher for various programs and games including Hollow Knight, Slope, Minecraft 1.12.2 etc... <br>
 Written entirely in html (The launcher, not the games) <br>
 Opens games in a new tab, use f11 to full screen. <br>
 Credit: bog/aukak and gn-math (bread) for main ports. I made a good few as well :) <br>
 Notice: Sorry about bugs, I am aware of a few and I'm working hard to fix them! Thanks!
+## Disclaimer & Terms of Use
+This website is intended for personal entertainment use only. Users are entirely responsible for complying with their local institution's policies, rules, and network guidelines (including schools, universities, and workplaces). The creators and hosts of this website accept no liability for any disciplinary actions, restricted access, or consequences resulting from unauthorized use during school or work hours. By continuing to use this site, you agree that you are doing so at your own risk and responsibility.
+
 ## Launch Solus MS In Browser
 [![Launch](https://img.shields.io/badge/Launch-Solus%20MS%20%E2%86%92-blue?style=for-the-badge)](https://katsugachi.github.io/Solus-MS/)
 ## Information To Launch Locally - Windows
