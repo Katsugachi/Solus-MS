@@ -56,6 +56,7 @@ Whenever a new feature is added, code is altered or a bug is fixed, the followin
 - Game overlay does not open games in a new tab <br>
 - All links in `About` are not broken<br>
 - Search for 3 random games and successfully find them, capitals and non capitalised<br>
+- All points above pass for mobile edition
 ## Details 
 ![GitHub Repo Size](https://img.shields.io/github/repo-size/Katsugachi/Solus-MS) <br>
 ![GitHub License](https://img.shields.io/github/license/Katsugachi/Solus-MS) <br>
