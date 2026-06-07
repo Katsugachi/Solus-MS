@@ -2066,7 +2066,6 @@
         // on this origin — works on any domain/port.
         // =====================================================
 
-        // Dump every record from every store in every IDB database on this origin
         async function dumpAllIndexedDB() {
             const result = {};
             let dbList = [];
@@ -2074,44 +2073,38 @@
                 dbList = indexedDB.databases ? await indexedDB.databases() : [{ name: 'SolusGamesDB' }];
             } catch(e) { dbList = [{ name: 'SolusGamesDB' }]; }
 
-            for (const { name, version } of dbList) {
+            for (const { name } of dbList) {
                 if (!name) continue;
                 try {
                     result[name] = await new Promise((resolve) => {
-                        // Open at the exact known version so no upgrade fires
-                        const req = version ? indexedDB.open(name, version) : indexedDB.open(name);
-                        req.onupgradeneeded = (e) => {
-                            // DB doesn't exist yet or version mismatch — just resolve empty
-                            e.target.transaction.abort();
-                            resolve({});
-                        };
+                        const req = indexedDB.open(name);
+                        // Let upgrade run but don't create anything new — just read existing stores
+                        req.onupgradeneeded = () => {};
                         req.onerror = () => resolve({});
                         req.onsuccess = () => {
                             const db = req.result;
                             const stores = Array.from(db.objectStoreNames);
-                            if (stores.length === 0) { db.close(); resolve({}); return; }
-
+                            if (!stores.length) { db.close(); resolve({}); return; }
                             const dbDump = {};
                             let remaining = stores.length;
-
                             for (const storeName of stores) {
                                 try {
                                     const tx = db.transaction(storeName, 'readonly');
                                     const store = tx.objectStore(storeName);
-                                    // getAll + getAllKeys gives us everything in one shot
                                     const keysReq = store.getAllKeys();
                                     const valsReq = store.getAll();
                                     let keys, vals;
-                                    keysReq.onsuccess = () => { keys = keysReq.result; if (vals !== undefined) finish(); };
-                                    valsReq.onsuccess = () => { vals = valsReq.result; if (keys !== undefined) finish(); };
+                                    const finish = () => {
+                                        if (keys === undefined || vals === undefined) return;
+                                        dbDump[storeName] = keys.map((k, i) => ({ key: k, value: vals[i] }));
+                                        if (--remaining === 0) { db.close(); resolve(dbDump); }
+                                    };
+                                    keysReq.onsuccess = () => { keys = keysReq.result; finish(); };
+                                    valsReq.onsuccess = () => { vals = valsReq.result; finish(); };
                                     keysReq.onerror = valsReq.onerror = () => {
                                         dbDump[storeName] = [];
                                         if (--remaining === 0) { db.close(); resolve(dbDump); }
                                     };
-                                    function finish() {
-                                        dbDump[storeName] = keys.map((k, i) => ({ key: k, value: vals[i] }));
-                                        if (--remaining === 0) { db.close(); resolve(dbDump); }
-                                    }
                                 } catch(e) {
                                     dbDump[storeName] = [];
                                     if (--remaining === 0) { db.close(); resolve(dbDump); }
@@ -2124,21 +2117,20 @@
             return result;
         }
 
-        // Restore all IndexedDB data from the dump
         async function restoreAllIndexedDB(idbDump) {
             for (const [dbName, dbData] of Object.entries(idbDump)) {
                 const storeNames = Object.keys(dbData);
-                if (storeNames.length === 0) continue;
+                if (!storeNames.length) continue;
                 try {
                     await new Promise((resolve) => {
                         const req = indexedDB.open(dbName);
-                        req.onupgradeneeded = (e) => e.target.transaction.abort();
+                        req.onupgradeneeded = () => {};
                         req.onerror = () => resolve();
                         req.onsuccess = () => {
                             const db = req.result;
                             const existingStores = Array.from(db.objectStoreNames);
                             const toRestore = storeNames.filter(s => existingStores.includes(s));
-                            if (toRestore.length === 0) { db.close(); resolve(); return; }
+                            if (!toRestore.length) { db.close(); resolve(); return; }
                             let remaining = toRestore.length;
                             for (const storeName of toRestore) {
                                 try {
@@ -2165,7 +2157,7 @@
                             }
                         };
                     });
-                } catch(e) { /* skip */ }
+                } catch(e) {}
             }
         }
 
