@@ -2071,58 +2071,55 @@
             const result = {};
             let dbList = [];
             try {
-                // indexedDB.databases() not available in all browsers (Firefox <126, some Safari)
-                if (indexedDB.databases) {
-                    dbList = await indexedDB.databases();
-                } else {
-                    // Fallback: at least grab the known Solus DB name
-                    dbList = [{ name: 'SolusGamesDB' }];
-                }
+                dbList = indexedDB.databases ? await indexedDB.databases() : [{ name: 'SolusGamesDB' }];
             } catch(e) { dbList = [{ name: 'SolusGamesDB' }]; }
 
-            for (const { name } of dbList) {
+            for (const { name, version } of dbList) {
                 if (!name) continue;
                 try {
-                    const dbData = await new Promise((resolve, reject) => {
-                        const req = indexedDB.open(name);
+                    result[name] = await new Promise((resolve) => {
+                        // Open at the exact known version so no upgrade fires
+                        const req = version ? indexedDB.open(name, version) : indexedDB.open(name);
+                        req.onupgradeneeded = (e) => {
+                            // DB doesn't exist yet or version mismatch — just resolve empty
+                            e.target.transaction.abort();
+                            resolve({});
+                        };
+                        req.onerror = () => resolve({});
                         req.onsuccess = () => {
                             const db = req.result;
                             const stores = Array.from(db.objectStoreNames);
+                            if (stores.length === 0) { db.close(); resolve({}); return; }
+
                             const dbDump = {};
-                            if (stores.length === 0) { db.close(); resolve(dbDump); return; }
-                            let done = 0;
+                            let remaining = stores.length;
+
                             for (const storeName of stores) {
                                 try {
                                     const tx = db.transaction(storeName, 'readonly');
                                     const store = tx.objectStore(storeName);
-                                    const records = [];
-                                    const cur = store.openCursor();
-                                    cur.onsuccess = (e) => {
-                                        const cursor = e.target.result;
-                                        if (cursor) {
-                                            records.push({ key: cursor.key, value: cursor.value });
-                                            cursor.continue();
-                                        } else {
-                                            dbDump[storeName] = records;
-                                            if (++done === stores.length) { db.close(); resolve(dbDump); }
-                                        }
-                                    };
-                                    cur.onerror = () => {
+                                    // getAll + getAllKeys gives us everything in one shot
+                                    const keysReq = store.getAllKeys();
+                                    const valsReq = store.getAll();
+                                    let keys, vals;
+                                    keysReq.onsuccess = () => { keys = keysReq.result; if (vals !== undefined) finish(); };
+                                    valsReq.onsuccess = () => { vals = valsReq.result; if (keys !== undefined) finish(); };
+                                    keysReq.onerror = valsReq.onerror = () => {
                                         dbDump[storeName] = [];
-                                        if (++done === stores.length) { db.close(); resolve(dbDump); }
+                                        if (--remaining === 0) { db.close(); resolve(dbDump); }
                                     };
+                                    function finish() {
+                                        dbDump[storeName] = keys.map((k, i) => ({ key: k, value: vals[i] }));
+                                        if (--remaining === 0) { db.close(); resolve(dbDump); }
+                                    }
                                 } catch(e) {
                                     dbDump[storeName] = [];
-                                    if (++done === stores.length) { db.close(); resolve(dbDump); }
+                                    if (--remaining === 0) { db.close(); resolve(dbDump); }
                                 }
                             }
                         };
-                        req.onerror = () => reject(req.error);
-                        // Don't run onupgradeneeded — just read existing schema
-                        req.onupgradeneeded = (e) => e.target.transaction.abort();
                     });
-                    result[name] = dbData;
-                } catch(e) { /* skip unreadable DBs */ }
+                } catch(e) { result[name] = {}; }
             }
             return result;
         }
@@ -2133,15 +2130,16 @@
                 const storeNames = Object.keys(dbData);
                 if (storeNames.length === 0) continue;
                 try {
-                    await new Promise((resolve, reject) => {
-                        // Open without version bump so we don't wipe schema
+                    await new Promise((resolve) => {
                         const req = indexedDB.open(dbName);
+                        req.onupgradeneeded = (e) => e.target.transaction.abort();
+                        req.onerror = () => resolve();
                         req.onsuccess = () => {
                             const db = req.result;
                             const existingStores = Array.from(db.objectStoreNames);
                             const toRestore = storeNames.filter(s => existingStores.includes(s));
                             if (toRestore.length === 0) { db.close(); resolve(); return; }
-                            let done = 0;
+                            let remaining = toRestore.length;
                             for (const storeName of toRestore) {
                                 try {
                                     const tx = db.transaction(storeName, 'readwrite');
@@ -2150,24 +2148,24 @@
                                     let i = 0;
                                     const putNext = () => {
                                         if (i >= records.length) {
-                                            if (++done === toRestore.length) { db.close(); resolve(); }
+                                            if (--remaining === 0) { db.close(); resolve(); }
                                             return;
                                         }
                                         const r = records[i++];
-                                        const req2 = store.put(r.value, store.keyPath ? undefined : r.key);
-                                        req2.onsuccess = putNext;
-                                        req2.onerror = putNext; // skip on conflict, keep going
+                                        try {
+                                            const r2 = store.keyPath ? store.put(r.value) : store.put(r.value, r.key);
+                                            r2.onsuccess = putNext;
+                                            r2.onerror = putNext;
+                                        } catch(e) { putNext(); }
                                     };
                                     putNext();
                                 } catch(e) {
-                                    if (++done === toRestore.length) { db.close(); resolve(); }
+                                    if (--remaining === 0) { db.close(); resolve(); }
                                 }
                             }
                         };
-                        req.onerror = () => reject(req.error);
-                        req.onupgradeneeded = (e) => e.target.transaction.abort();
                     });
-                } catch(e) { /* skip DBs we can't write to */ }
+                } catch(e) { /* skip */ }
             }
         }
 
