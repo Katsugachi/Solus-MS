@@ -499,7 +499,7 @@
         }
 
         /* --- Stats Page --- */
-        #stats-page { max-width: 900px; }
+        #stats-page { max-width: 900px; margin: 0 auto; }
 
         .stats-summary {
             display: flex;
@@ -1116,9 +1116,7 @@
                     </label>
                 </div>
                 <div class="setting-item">
-                    <div>
-                        <span>Display Mode</span>
-                    </div>
+                    <span>Display Mode</span>
                     <div style="display:flex; align-items:center; gap:10px;">
                         <span style="font-size:0.85rem; opacity:0.7;" id="display-mode-label-desktop">Desktop</span>
                         <label class="switch">
@@ -1129,8 +1127,30 @@
                     </div>
                 </div>
             </div>
+
+            <div class="settings-group">
+                <h3>Library Backup</h3>
+                <div class="setting-item">
+                    <div>
+                        <span>Export Library</span>
+                        <div style="font-size:0.78rem; opacity:0.55; margin-top:2px;">Downloads all game saves, custom games, stats & settings</div>
+                    </div>
+                    <button class="launch-btn" id="export-library-btn" style="width:160px; padding:8px; flex-shrink:0;">Export Backup</button>
+                </div>
+                <div class="setting-item">
+                    <div>
+                        <span>Import Backup</span>
+                        <div style="font-size:0.78rem; opacity:0.55; margin-top:2px;">Restores game saves, custom games, stats & settings</div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0;">
+                        <button class="launch-btn" id="import-library-btn" style="width:160px; padding:8px;">Import Library</button>
+                        <input type="file" id="import-library-file" accept=".json" style="display:none;">
+                        <div id="import-library-status" style="font-size:0.78rem; opacity:0.7; text-align:right;"></div>
+                    </div>
+                </div>
+            </div>
         </div>
-       
+
         <div id="about-page" style="display: none;">
             <header class="header">
                 <h2>About Solus MS</h2>
@@ -1145,7 +1165,7 @@
                     <h3>Version Details</h3>
                     <div class="setting-item">
                         <span>Application Version</span>
-                        <strong>3.1.2 (Stats, Search & Mobile UI)</strong>
+                        <strong>3.0.0 (Stats & Search)</strong>
                     </div>
                     <div class="setting-item">
                       <span>Interface Theme</span>
@@ -1404,7 +1424,6 @@
                 }
 
                 // --- New tab mode (default) ---
-                // Mobile Safari blocks window.open in async context
                 const isMobileSafari = /iP(hone|ad|od)/i.test(navigator.userAgent) &&
                     /WebKit/i.test(navigator.userAgent) &&
                     !/CriOS|FxiOS|EdgiOS/i.test(navigator.userAgent);
@@ -1415,56 +1434,8 @@
                 }
 
                 const win = window.open('', '_blank');
-                if (!win) {
-                    window.open(launchUrl, '_blank') || (window.location.href = launchUrl);
-                    return;
-                }
-                win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <title>${tabName}</title>
-  <link rel="icon" id="tab-favicon" href="${favicon}">
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { width:100vw; height:100vh; overflow:hidden; background:#000; }
-    iframe { width:100%; height:100%; border:none; display:block; }
-  </style>
-</head>
-<body>
-  <iframe src="${launchUrl}" allowfullscreen allow="autoplay; fullscreen"></iframe>
-  <script>
-    if (typeof BroadcastChannel !== 'undefined') {
-      const _bc = new BroadcastChannel('solus_playtime');
-      const _sessionStart = Date.now();
-      window.addEventListener('beforeunload', () => {
-        const _elapsed = Math.round((Date.now() - _sessionStart) / 60000);
-        _bc.postMessage({ statsKey: ${JSON.stringify(statsKey)}, elapsed: _elapsed });
-      });
-    }
-    ${invisEnabled ? `
-    const _origTitle = ${JSON.stringify(tabName)};
-    const _origFav = ${JSON.stringify(favicon)};
-    const _favEl = document.getElementById('tab-favicon');
-    const _blank = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        document.title = '\\u3164';
-        _favEl.href = _blank;
-      } else {
-        document.title = _origTitle;
-        _favEl.href = _origFav;
-      }
-    });` : ''}
-    ${panicEnabled ? `
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        window.location.href = ${JSON.stringify(savedPanicUrl)};
-      }
-    });` : ''}
-  <\/script>
-</body>
-</html>`);
+                if (!win) { window.open(launchUrl, '_blank') || (window.location.href = launchUrl); return; }
+                win.document.write(`<!DOCTYPE html><html><head><title>${tabName}</title><link rel="icon" id="tab-favicon" href="${favicon}"><style>*{margin:0;padding:0;box-sizing:border-box}body{width:100vw;height:100vh;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:none;display:block}</style></head><body><iframe src="${launchUrl}" allowfullscreen allow="autoplay; fullscreen"></iframe><script>if(typeof BroadcastChannel!=='undefined'){const _bc=new BroadcastChannel('solus_playtime');const _t=Date.now();window.addEventListener('beforeunload',()=>_bc.postMessage({statsKey:${JSON.stringify(statsKey)},elapsed:Math.round((Date.now()-_t)/60000)}));}${invisEnabled?`const _favEl=document.getElementById('tab-favicon');document.addEventListener('visibilitychange',()=>{if(document.hidden){document.title='\\u3164';_favEl.href='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';}else{document.title=${JSON.stringify(tabName)};_favEl.href=${JSON.stringify(favicon)};}});`:''}${panicEnabled?`document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();window.location.href=${JSON.stringify(savedPanicUrl)};}});`:''}<\/script></body></html>`);
                 win.document.close();
             });
            
@@ -1625,13 +1596,10 @@
         function setMobileMode(enabled, isAuto) {
             document.body.classList.toggle('mobile-mode', enabled);
             if (enabled) updateLandscapeClass();
-
-            var toggle = document.getElementById('display-mode-toggle');
-            var autoLabel = document.getElementById('display-mode-auto-label');
-            var deskLabel = document.getElementById('display-mode-label-desktop');
-            var mobLabel = document.getElementById('display-mode-label-mobile');
+            const toggle = document.getElementById('display-mode-toggle');
+            const deskLabel = document.getElementById('display-mode-label-desktop');
+            const mobLabel = document.getElementById('display-mode-label-mobile');
             if (toggle) toggle.checked = enabled;
-            if (autoLabel) autoLabel.textContent = isAuto ? 'Auto-detected' : 'Manually set';
             if (deskLabel) deskLabel.style.opacity = enabled ? '0.4' : '1';
             if (mobLabel) mobLabel.style.opacity = enabled ? '1' : '0.4';
         }
@@ -1857,6 +1825,44 @@
         const favIconPng = document.getElementById('favicon-png');
         const favIconIco = document.getElementById('favicon-ico');
 
+        function restoreSettingsUI() {
+            const _tabInput = document.getElementById('tab-name-input');
+            const _favInput = document.getElementById('favicon-url-input');
+            const _favPng = document.getElementById('favicon-png');
+            const _favIco = document.getElementById('favicon-ico');
+            const savedTab = localStorage.getItem('solus_tabName');
+            const savedFav = localStorage.getItem('solus_favicon');
+            const savedInvis = localStorage.getItem('solus_invis') === 'true';
+            const savedReflection = localStorage.getItem('solus_reflection') === 'true';
+            const savedPanicEnabled = localStorage.getItem('solus_panicEnabled') === 'true';
+            const savedPanicMode = localStorage.getItem('solus_panicMode') || 'redirect';
+            const savedPanicUrl = localStorage.getItem('solus_panicUrl') || '';
+            if (savedTab && _tabInput) { _tabInput.value = savedTab; document.title = savedTab; }
+            if (savedFav && _favInput) { _favInput.value = savedFav; if (_favPng) _favPng.href = savedFav; if (_favIco) _favIco.href = savedFav; }
+            const invisEl = document.getElementById('invisibility-cloak-toggle');
+            const reflectEl = document.getElementById('reflection-cloak-toggle');
+            const panicToggleEl = document.getElementById('panic-key-toggle');
+            const panicGroupEl = document.getElementById('panic-settings-group');
+            const panicModeEl = document.getElementById('panic-mode-select');
+            const panicRedirectEl = document.getElementById('panic-redirect-setting');
+            const panicBgEl = document.getElementById('panic-background-setting');
+            const panicUrlEl = document.getElementById('panic-url-input');
+            const panicBgUrlEl = document.getElementById('panic-background-url');
+            if (invisEl) invisEl.checked = savedInvis;
+            if (reflectEl) reflectEl.checked = savedReflection;
+            document.body.classList.toggle('reflection-active', savedReflection);
+            if (panicToggleEl) panicToggleEl.checked = savedPanicEnabled;
+            if (panicGroupEl) panicGroupEl.style.display = savedPanicEnabled ? 'flex' : 'none';
+            if (panicModeEl) panicModeEl.value = savedPanicMode;
+            if (savedPanicMode !== 'redirect') {
+                if (panicRedirectEl) panicRedirectEl.style.display = 'none';
+                if (panicBgEl) panicBgEl.style.display = 'flex';
+            }
+            if (savedPanicUrl) { if (panicUrlEl) panicUrlEl.value = savedPanicUrl; if (panicBgUrlEl) panicBgUrlEl.value = savedPanicUrl; }
+            const savedTheme = localStorage.getItem('solus_theme');
+            if (savedTheme) applyTheme(savedTheme);
+        }
+
         // Restore saved settings on load
         (function restoreSettings() {
             const savedTab = localStorage.getItem('solus_tabName');
@@ -2053,16 +2059,119 @@
             win.document.body.appendChild(iframe);
             window.location.replace('https://www.google.com');
         };
+
+        // =====================================================
+        // LIBRARY EXPORT / IMPORT
+        // Dumps the entire localStorage for this origin so all
+        // game saves, stats, and settings are included.
+        // =====================================================
+
+        async function exportLibrary() {
+            const btn = document.getElementById('export-library-btn');
+            btn.textContent = 'Exporting…';
+            btn.disabled = true;
+            try {
+                // Dump every localStorage key on this origin
+                const localStorageData = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    localStorageData[key] = localStorage.getItem(key);
+                }
+
+                // Dump all custom games from IndexedDB (includes full HTML content)
+                const games = await getAllGames();
+
+                const payload = {
+                    version: '3.0.0',
+                    exportedAt: new Date().toISOString(),
+                    localStorageData,
+                    games
+                };
+
+                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `solus-backup-${new Date().toISOString().slice(0,10)}.json`;                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+
+                btn.textContent = 'Exported ✓';
+                btn.style.background = '#28a745';
+                setTimeout(() => { btn.textContent = 'Export Library'; btn.style.background = ''; btn.disabled = false; }, 2000);
+            } catch(err) {
+                console.error('Export failed:', err);
+                btn.textContent = 'Export Failed';
+                btn.style.background = '#dc3545';
+                setTimeout(() => { btn.textContent = 'Export Library'; btn.style.background = ''; btn.disabled = false; }, 2500);
+            }
+        }
+
+        async function importLibrary(file) {
+            const status = document.getElementById('import-library-status');
+            const btn = document.getElementById('import-library-btn');
+            btn.disabled = true;
+            status.textContent = 'Reading file…';
+            try {
+                const text = await file.text();
+                const payload = JSON.parse(text);
+                if (!payload || typeof payload !== 'object') throw new Error('Invalid backup file.');
+
+                // Restore all localStorage keys — game saves, stats, settings, everything
+                // Skip display mode since that's per-device
+                if (payload.localStorageData && typeof payload.localStorageData === 'object') {
+                    for (const [key, val] of Object.entries(payload.localStorageData)) {
+                        if (key === 'solus_displayMode') continue;
+                        localStorage.setItem(key, val);
+                    }
+                }
+
+                // Restore custom games into IndexedDB (skip duplicates by name)
+                if (Array.isArray(payload.games)) {
+                    const existing = await getAllGames();
+                    const existingNames = new Set(existing.map(g => g.name.toLowerCase()));
+                    let added = 0, skipped = 0;
+                    for (const game of payload.games) {
+                        const { id: _id, ...gameData } = game;
+                        if (existingNames.has(gameData.name.toLowerCase())) { skipped++; }
+                        else { await saveGame({ ...gameData, timestamp: gameData.timestamp || Date.now() }); existingNames.add(gameData.name.toLowerCase()); added++; }
+                    }
+                    status.textContent = `Done! ${added} games added, ${skipped} skipped.`;
+                } else {
+                    status.textContent = 'Done! Settings and saves restored.';
+                }
+
+                restoreSettingsUI();
+                loadGames();
+                btn.style.background = '#28a745';
+                setTimeout(() => { status.textContent = ''; btn.style.background = ''; btn.disabled = false; }, 3000);
+            } catch(err) {
+                console.error('Import failed:', err);
+                status.textContent = 'Import failed: ' + (err.message || 'Unknown error');
+                btn.style.background = '#dc3545';
+                setTimeout(() => { status.textContent = ''; btn.style.background = ''; btn.disabled = false; }, 3000);
+            }
+            document.getElementById('import-library-file').value = '';
+        }
+
+        document.getElementById('export-library-btn').addEventListener('click', exportLibrary);
+
+        document.getElementById('import-library-btn').addEventListener('click', () => {
+            document.getElementById('import-library-file').click();
+        });
+
+        document.getElementById('import-library-file').addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                importLibrary(e.target.files[0]);
+            }
+        });
         (async function initialize() {
             try {
                 await initDB();
-                // Wait for DB to be ready before showing the page
-                showPage('library');
             } catch (e) {
                 console.error("DB Initialization failed:", e);
-                // Fallback to show the page even if DB fails
-                showPage('library');
             }
+            showPage('library');
         })();
     </script>
 
