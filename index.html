@@ -2070,45 +2070,45 @@
             const result = {};
             let dbList = [];
             try {
-                dbList = indexedDB.databases ? await indexedDB.databases() : [{ name: 'SolusGamesDB' }];
-            } catch(e) { dbList = [{ name: 'SolusGamesDB' }]; }
+                dbList = indexedDB.databases ? await indexedDB.databases() : [{ name: 'SolusGamesDB', version: 1 }];
+            } catch(e) { dbList = [{ name: 'SolusGamesDB', version: 1 }]; }
 
-            for (const { name } of dbList) {
-                if (!name) continue;
+            for (const { name, version } of dbList) {
+                if (!name || !version) continue;
                 try {
                     result[name] = await new Promise((resolve) => {
-                        const req = indexedDB.open(name);
-                        // Let upgrade run but don't create anything new — just read existing stores
-                        req.onupgradeneeded = () => {};
+                        // Open at EXACT version — this guarantees onupgradeneeded never fires
+                        const req = indexedDB.open(name, version);
                         req.onerror = () => resolve({});
+                        req.onblocked = () => resolve({});
+                        // Should never fire since we pass the exact version
+                        req.onupgradeneeded = () => resolve({});
                         req.onsuccess = () => {
                             const db = req.result;
-                            const stores = Array.from(db.objectStoreNames);
-                            if (!stores.length) { db.close(); resolve({}); return; }
+                            const storeNames = Array.from(db.objectStoreNames);
+                            if (!storeNames.length) { db.close(); resolve({}); return; }
                             const dbDump = {};
-                            let remaining = stores.length;
-                            for (const storeName of stores) {
+                            let remaining = storeNames.length;
+                            const checkDone = () => { if (--remaining === 0) { db.close(); resolve(dbDump); } };
+                            for (const storeName of storeNames) {
+                                dbDump[storeName] = [];
                                 try {
                                     const tx = db.transaction(storeName, 'readonly');
+                                    tx.onerror = tx.onabort = () => checkDone();
                                     const store = tx.objectStore(storeName);
                                     const keysReq = store.getAllKeys();
                                     const valsReq = store.getAll();
-                                    let keys, vals;
-                                    const finish = () => {
-                                        if (keys === undefined || vals === undefined) return;
+                                    let keys = null, vals = null;
+                                    const tryFinish = () => {
+                                        if (keys === null || vals === null) return;
                                         dbDump[storeName] = keys.map((k, i) => ({ key: k, value: vals[i] }));
-                                        if (--remaining === 0) { db.close(); resolve(dbDump); }
+                                        checkDone();
                                     };
-                                    keysReq.onsuccess = () => { keys = keysReq.result; finish(); };
-                                    valsReq.onsuccess = () => { vals = valsReq.result; finish(); };
-                                    keysReq.onerror = valsReq.onerror = () => {
-                                        dbDump[storeName] = [];
-                                        if (--remaining === 0) { db.close(); resolve(dbDump); }
-                                    };
-                                } catch(e) {
-                                    dbDump[storeName] = [];
-                                    if (--remaining === 0) { db.close(); resolve(dbDump); }
-                                }
+                                    keysReq.onsuccess = () => { keys = keysReq.result; tryFinish(); };
+                                    valsReq.onsuccess = () => { vals = valsReq.result; tryFinish(); };
+                                    keysReq.onerror = () => { keys = []; tryFinish(); };
+                                    valsReq.onerror = () => { vals = []; tryFinish(); };
+                                } catch(e) { checkDone(); }
                             }
                         };
                     });
@@ -2123,37 +2123,35 @@
                 if (!storeNames.length) continue;
                 try {
                     await new Promise((resolve) => {
+                        // Open with no version — just connect to whatever exists
                         const req = indexedDB.open(dbName);
-                        req.onupgradeneeded = () => {};
                         req.onerror = () => resolve();
+                        req.onblocked = () => resolve();
+                        req.onupgradeneeded = () => resolve(); // shouldn't fire
                         req.onsuccess = () => {
                             const db = req.result;
                             const existingStores = Array.from(db.objectStoreNames);
                             const toRestore = storeNames.filter(s => existingStores.includes(s));
                             if (!toRestore.length) { db.close(); resolve(); return; }
                             let remaining = toRestore.length;
+                            const checkDone = () => { if (--remaining === 0) { db.close(); resolve(); } };
                             for (const storeName of toRestore) {
                                 try {
                                     const tx = db.transaction(storeName, 'readwrite');
+                                    tx.onerror = tx.onabort = () => checkDone();
                                     const store = tx.objectStore(storeName);
                                     const records = dbData[storeName] || [];
                                     let i = 0;
                                     const putNext = () => {
-                                        if (i >= records.length) {
-                                            if (--remaining === 0) { db.close(); resolve(); }
-                                            return;
-                                        }
+                                        if (i >= records.length) { checkDone(); return; }
                                         const r = records[i++];
                                         try {
                                             const r2 = store.keyPath ? store.put(r.value) : store.put(r.value, r.key);
-                                            r2.onsuccess = putNext;
-                                            r2.onerror = putNext;
+                                            r2.onsuccess = r2.onerror = putNext;
                                         } catch(e) { putNext(); }
                                     };
                                     putNext();
-                                } catch(e) {
-                                    if (--remaining === 0) { db.close(); resolve(); }
-                                }
+                                } catch(e) { checkDone(); }
                             }
                         };
                     });
