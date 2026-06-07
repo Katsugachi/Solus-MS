@@ -2066,6 +2066,91 @@
         // on this origin — works on any domain/port.
         // =====================================================
 
+        // Binary serialization — JSON can't handle ArrayBuffer/Blob/TypedArray
+        function valueToSerializable(val) {
+            if (val instanceof ArrayBuffer) {
+                return { __type: 'ArrayBuffer', data: bufToB64(val) };
+            }
+            if (val instanceof Blob) {
+                // Blobs can't be read synchronously — mark for async handling
+                // We handle them via getAllKeys/getAll which returns them, but
+                // JSON.stringify will drop them. Convert to ArrayBuffer first via FileReader.
+                return { __type: 'Blob', data: null, size: val.size, blobType: val.type };
+            }
+            if (ArrayBuffer.isView(val)) {
+                return { __type: val.constructor.name, data: bufToB64(val.buffer) };
+            }
+            if (Array.isArray(val)) return val.map(valueToSerializable);
+            if (val && typeof val === 'object') {
+                const out = {};
+                for (const k of Object.keys(val)) out[k] = valueToSerializable(val[k]);
+                return out;
+            }
+            return val;
+        }
+
+        function valueFromSerializable(val) {
+            if (val && val.__type === 'ArrayBuffer') return b64ToBuf(val.data);
+            if (val && val.__type === 'Blob') return new Blob([], { type: val.blobType || '' }); // best effort
+            if (val && val.__type) {
+                const buf = b64ToBuf(val.data);
+                const TypedArray = self[val.__type];
+                return TypedArray ? new TypedArray(buf) : buf;
+            }
+            if (Array.isArray(val)) return val.map(valueFromSerializable);
+            if (val && typeof val === 'object') {
+                const out = {};
+                for (const k of Object.keys(val)) out[k] = valueFromSerializable(val[k]);
+                return out;
+            }
+            return val;
+        }
+
+        function bufToB64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let bin = '';
+            for (let i = 0; i < bytes.byteLength; i++) bin += String.fromCharCode(bytes[i]);
+            return btoa(bin);
+        }
+
+        function b64ToBuf(b64) {
+            const bin = atob(b64);
+            const buf = new ArrayBuffer(bin.length);
+            const bytes = new Uint8Array(buf);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            return buf;
+        }
+
+        // Dump all records from a single store, handling Blobs asynchronously
+        async function dumpStore(store) {
+            return new Promise((resolve) => {
+                const keysReq = store.getAllKeys();
+                const valsReq = store.getAll();
+                let keys = null, vals = null;
+                const tryFinish = async () => {
+                    if (keys === null || vals === null) return;
+                    // Convert any Blobs to ArrayBuffer before serializing
+                    const converted = await Promise.all(vals.map(v => blobsToBuffers(v)));
+                    resolve(keys.map((k, i) => ({ key: k, value: valueToSerializable(converted[i]) })));
+                };
+                keysReq.onsuccess = () => { keys = keysReq.result; tryFinish(); };
+                valsReq.onsuccess = () => { vals = valsReq.result; tryFinish(); };
+                keysReq.onerror = () => { keys = []; tryFinish(); };
+                valsReq.onerror = () => { vals = []; tryFinish(); };
+            });
+        }
+
+        async function blobsToBuffers(val) {
+            if (val instanceof Blob) return val.arrayBuffer();
+            if (Array.isArray(val)) return Promise.all(val.map(blobsToBuffers));
+            if (val && typeof val === 'object' && !(val instanceof ArrayBuffer) && !ArrayBuffer.isView(val)) {
+                const out = {};
+                for (const k of Object.keys(val)) out[k] = await blobsToBuffers(val[k]);
+                return out;
+            }
+            return val;
+        }
+
         async function dumpAllIndexedDB() {
             const result = {};
             let dbList = [];
@@ -2077,39 +2162,23 @@
                 if (!name || !version) continue;
                 try {
                     result[name] = await new Promise((resolve) => {
-                        // Open at EXACT version — this guarantees onupgradeneeded never fires
                         const req = indexedDB.open(name, version);
                         req.onerror = () => resolve({});
                         req.onblocked = () => resolve({});
-                        // Should never fire since we pass the exact version
                         req.onupgradeneeded = () => resolve({});
-                        req.onsuccess = () => {
+                        req.onsuccess = async () => {
                             const db = req.result;
                             const storeNames = Array.from(db.objectStoreNames);
                             if (!storeNames.length) { db.close(); resolve({}); return; }
                             const dbDump = {};
-                            let remaining = storeNames.length;
-                            const checkDone = () => { if (--remaining === 0) { db.close(); resolve(dbDump); } };
                             for (const storeName of storeNames) {
-                                dbDump[storeName] = [];
                                 try {
                                     const tx = db.transaction(storeName, 'readonly');
-                                    tx.onerror = tx.onabort = () => checkDone();
-                                    const store = tx.objectStore(storeName);
-                                    const keysReq = store.getAllKeys();
-                                    const valsReq = store.getAll();
-                                    let keys = null, vals = null;
-                                    const tryFinish = () => {
-                                        if (keys === null || vals === null) return;
-                                        dbDump[storeName] = keys.map((k, i) => ({ key: k, value: vals[i] }));
-                                        checkDone();
-                                    };
-                                    keysReq.onsuccess = () => { keys = keysReq.result; tryFinish(); };
-                                    valsReq.onsuccess = () => { vals = valsReq.result; tryFinish(); };
-                                    keysReq.onerror = () => { keys = []; tryFinish(); };
-                                    valsReq.onerror = () => { vals = []; tryFinish(); };
-                                } catch(e) { checkDone(); }
+                                    dbDump[storeName] = await dumpStore(tx.objectStore(storeName));
+                                } catch(e) { dbDump[storeName] = []; }
                             }
+                            db.close();
+                            resolve(dbDump);
                         };
                     });
                 } catch(e) { result[name] = {}; }
@@ -2123,11 +2192,10 @@
                 if (!storeNames.length) continue;
                 try {
                     await new Promise((resolve) => {
-                        // Open with no version — just connect to whatever exists
                         const req = indexedDB.open(dbName);
                         req.onerror = () => resolve();
                         req.onblocked = () => resolve();
-                        req.onupgradeneeded = () => resolve(); // shouldn't fire
+                        req.onupgradeneeded = () => resolve();
                         req.onsuccess = () => {
                             const db = req.result;
                             const existingStores = Array.from(db.objectStoreNames);
@@ -2146,7 +2214,8 @@
                                         if (i >= records.length) { checkDone(); return; }
                                         const r = records[i++];
                                         try {
-                                            const r2 = store.keyPath ? store.put(r.value) : store.put(r.value, r.key);
+                                            const val = valueFromSerializable(r.value);
+                                            const r2 = store.keyPath ? store.put(val) : store.put(val, r.key);
                                             r2.onsuccess = r2.onerror = putNext;
                                         } catch(e) { putNext(); }
                                     };
