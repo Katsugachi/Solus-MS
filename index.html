@@ -1133,14 +1133,14 @@
                 <div class="setting-item">
                     <div>
                         <span>Export Library</span>
-                        <div style="font-size:0.78rem; opacity:0.55; margin-top:2px;">Downloads all game saves, custom games, stats & settings</div>
+                        <div style="font-size:0.78rem; opacity:0.55; margin-top:2px;">Downloads all game saves (localStorage + IndexedDB), custom games & settings</div>
                     </div>
                     <button class="launch-btn" id="export-library-btn" style="width:160px; padding:8px; flex-shrink:0;">Export Backup</button>
                 </div>
                 <div class="setting-item">
                     <div>
                         <span>Import Backup</span>
-                        <div style="font-size:0.78rem; opacity:0.55; margin-top:2px;">Restores game saves, custom games, stats & settings</div>
+                        <div style="font-size:0.78rem; opacity:0.55; margin-top:2px;">Restores all game saves (localStorage + IndexedDB), custom games & settings</div>
                     </div>
                     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0;">
                         <button class="launch-btn" id="import-library-btn" style="width:160px; padding:8px;">Import Library</button>
@@ -1165,7 +1165,7 @@
                     <h3>Version Details</h3>
                     <div class="setting-item">
                         <span>Application Version</span>
-                        <strong>3.2.0 (Saves Retain)</strong>
+                        <strong>3.0.0 (Stats & Search)</strong>
                     </div>
                     <div class="setting-item">
                       <span>Interface Theme</span>
@@ -2062,48 +2062,152 @@
 
         // =====================================================
         // LIBRARY EXPORT / IMPORT
-        // Dumps the entire localStorage for this origin so all
-        // game saves, stats, and settings are included.
+        // Dumps all localStorage AND all IndexedDB databases
+        // on this origin — works on any domain/port.
         // =====================================================
+
+        // Dump every record from every store in every IDB database on this origin
+        async function dumpAllIndexedDB() {
+            const result = {};
+            let dbList = [];
+            try {
+                // indexedDB.databases() not available in all browsers (Firefox <126, some Safari)
+                if (indexedDB.databases) {
+                    dbList = await indexedDB.databases();
+                } else {
+                    // Fallback: at least grab the known Solus DB name
+                    dbList = [{ name: 'SolusGamesDB' }];
+                }
+            } catch(e) { dbList = [{ name: 'SolusGamesDB' }]; }
+
+            for (const { name } of dbList) {
+                if (!name) continue;
+                try {
+                    const dbData = await new Promise((resolve, reject) => {
+                        const req = indexedDB.open(name);
+                        req.onsuccess = () => {
+                            const db = req.result;
+                            const stores = Array.from(db.objectStoreNames);
+                            const dbDump = {};
+                            if (stores.length === 0) { db.close(); resolve(dbDump); return; }
+                            let done = 0;
+                            for (const storeName of stores) {
+                                try {
+                                    const tx = db.transaction(storeName, 'readonly');
+                                    const store = tx.objectStore(storeName);
+                                    const records = [];
+                                    const cur = store.openCursor();
+                                    cur.onsuccess = (e) => {
+                                        const cursor = e.target.result;
+                                        if (cursor) {
+                                            records.push({ key: cursor.key, value: cursor.value });
+                                            cursor.continue();
+                                        } else {
+                                            dbDump[storeName] = records;
+                                            if (++done === stores.length) { db.close(); resolve(dbDump); }
+                                        }
+                                    };
+                                    cur.onerror = () => {
+                                        dbDump[storeName] = [];
+                                        if (++done === stores.length) { db.close(); resolve(dbDump); }
+                                    };
+                                } catch(e) {
+                                    dbDump[storeName] = [];
+                                    if (++done === stores.length) { db.close(); resolve(dbDump); }
+                                }
+                            }
+                        };
+                        req.onerror = () => reject(req.error);
+                        // Don't run onupgradeneeded — just read existing schema
+                        req.onupgradeneeded = (e) => e.target.transaction.abort();
+                    });
+                    result[name] = dbData;
+                } catch(e) { /* skip unreadable DBs */ }
+            }
+            return result;
+        }
+
+        // Restore all IndexedDB data from the dump
+        async function restoreAllIndexedDB(idbDump) {
+            for (const [dbName, dbData] of Object.entries(idbDump)) {
+                const storeNames = Object.keys(dbData);
+                if (storeNames.length === 0) continue;
+                try {
+                    await new Promise((resolve, reject) => {
+                        // Open without version bump so we don't wipe schema
+                        const req = indexedDB.open(dbName);
+                        req.onsuccess = () => {
+                            const db = req.result;
+                            const existingStores = Array.from(db.objectStoreNames);
+                            const toRestore = storeNames.filter(s => existingStores.includes(s));
+                            if (toRestore.length === 0) { db.close(); resolve(); return; }
+                            let done = 0;
+                            for (const storeName of toRestore) {
+                                try {
+                                    const tx = db.transaction(storeName, 'readwrite');
+                                    const store = tx.objectStore(storeName);
+                                    const records = dbData[storeName] || [];
+                                    let i = 0;
+                                    const putNext = () => {
+                                        if (i >= records.length) {
+                                            if (++done === toRestore.length) { db.close(); resolve(); }
+                                            return;
+                                        }
+                                        const r = records[i++];
+                                        const req2 = store.put(r.value, store.keyPath ? undefined : r.key);
+                                        req2.onsuccess = putNext;
+                                        req2.onerror = putNext; // skip on conflict, keep going
+                                    };
+                                    putNext();
+                                } catch(e) {
+                                    if (++done === toRestore.length) { db.close(); resolve(); }
+                                }
+                            }
+                        };
+                        req.onerror = () => reject(req.error);
+                        req.onupgradeneeded = (e) => e.target.transaction.abort();
+                    });
+                } catch(e) { /* skip DBs we can't write to */ }
+            }
+        }
 
         async function exportLibrary() {
             const btn = document.getElementById('export-library-btn');
             btn.textContent = 'Exporting…';
             btn.disabled = true;
             try {
-                // Dump every localStorage key on this origin
                 const localStorageData = {};
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
                     localStorageData[key] = localStorage.getItem(key);
                 }
 
-                // Dump all custom games from IndexedDB (includes full HTML content)
-                const games = await getAllGames();
+                const idbData = await dumpAllIndexedDB();
 
                 const payload = {
-                    version: '3.0.0',
+                    version: '4.0.0',
                     exportedAt: new Date().toISOString(),
                     localStorageData,
-                    games
+                    idbData
                 };
 
                 const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `solus-backup-${new Date().toISOString().slice(0,10)}.json`;                document.body.appendChild(a);
+                a.download = `solus-backup-${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
                 a.click();
                 setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
 
                 btn.textContent = 'Exported ✓';
                 btn.style.background = '#28a745';
-                setTimeout(() => { btn.textContent = 'Export Library'; btn.style.background = ''; btn.disabled = false; }, 2000);
+                setTimeout(() => { btn.textContent = 'Export Backup'; btn.style.background = ''; btn.disabled = false; }, 2000);
             } catch(err) {
                 console.error('Export failed:', err);
                 btn.textContent = 'Export Failed';
                 btn.style.background = '#dc3545';
-                setTimeout(() => { btn.textContent = 'Export Library'; btn.style.background = ''; btn.disabled = false; }, 2500);
+                setTimeout(() => { btn.textContent = 'Export Backup'; btn.style.background = ''; btn.disabled = false; }, 2500);
             }
         }
 
@@ -2117,8 +2221,7 @@
                 const payload = JSON.parse(text);
                 if (!payload || typeof payload !== 'object') throw new Error('Invalid backup file.');
 
-                // Restore all localStorage keys — game saves, stats, settings, everything
-                // Skip display mode since that's per-device
+                // Restore localStorage
                 if (payload.localStorageData && typeof payload.localStorageData === 'object') {
                     for (const [key, val] of Object.entries(payload.localStorageData)) {
                         if (key === 'solus_displayMode') continue;
@@ -2126,23 +2229,27 @@
                     }
                 }
 
-                // Restore custom games into IndexedDB (skip duplicates by name)
+                // Restore all IndexedDB (covers Solus games DB + any game save DBs)
+                if (payload.idbData && typeof payload.idbData === 'object') {
+                    status.textContent = 'Restoring saves…';
+                    await restoreAllIndexedDB(payload.idbData);
+                }
+
+                // Legacy v3 backup support: games array
                 if (Array.isArray(payload.games)) {
                     const existing = await getAllGames();
                     const existingNames = new Set(existing.map(g => g.name.toLowerCase()));
-                    let added = 0, skipped = 0;
                     for (const game of payload.games) {
                         const { id: _id, ...gameData } = game;
-                        if (existingNames.has(gameData.name.toLowerCase())) { skipped++; }
-                        else { await saveGame({ ...gameData, timestamp: gameData.timestamp || Date.now() }); existingNames.add(gameData.name.toLowerCase()); added++; }
+                        if (!existingNames.has(gameData.name.toLowerCase())) {
+                            await saveGame({ ...gameData, timestamp: gameData.timestamp || Date.now() });
+                        }
                     }
-                    status.textContent = `Done! ${added} games added, ${skipped} skipped.`;
-                } else {
-                    status.textContent = 'Done! Settings and saves restored.';
                 }
 
                 restoreSettingsUI();
                 loadGames();
+                status.textContent = 'Restore complete ✓';
                 btn.style.background = '#28a745';
                 setTimeout(() => { status.textContent = ''; btn.style.background = ''; btn.disabled = false; }, 3000);
             } catch(err) {
