@@ -64,7 +64,8 @@ Whenever a new feature is added, code is altered or a bug is fixed, the followin
 I thought i would just write some stuff so i can remember when i did what since recently i've been doing a bunch of work on Solus MS.<br>
 7/04/26 - added search bar, fixed persistent themes so they save now. Stats page added - V 3.0.0<br>
 7/05/26 - Mobile GUI and fixed the autodetect trying to switch the GUI like 50 times a second <br>
-7/06/26 - working on exporting and importing everything
+7/06/26 - working on exporting and importing everything<br>
+26/06/25 - added deltarune chapter 5<br>
 ## Details 
 ![GitHub Repo Size](https://img.shields.io/github/repo-size/Katsugachi/Solus-MS) <br>
 ![GitHub License](https://img.shields.io/github/license/Katsugachi/Solus-MS) <br>
