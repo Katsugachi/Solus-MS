@@ -2484,11 +2484,10 @@
 <div id="solus-notice-overlay">
   <div id="solus-notice-box" role="dialog" aria-modal="true">
     <div id="solus-notice-badge">Update Notice</div>
-    <div id="solus-notice-title">Hollow Knight Update</div>
+    <div id="solus-notice-title">Deltarune Chapter 5 & Among Us</div>
     <div id="solus-notice-divider"></div>
     <div id="solus-notice-body">
-      <strong>Sounds and dreamers</strong> should now be fixed, and the game automatically supports <strong>4K resolution</strong>.<br><br>
-      Please be patient as the new version loads in and I hope you downloaded your save files! <br><br>Happy Gaming!
+      <strong>Deltarune Chapter 5</strong> and <strong>Among Us</strong> have been added and save progress is retained. Deltarune also now supports importing saves from the EXE version. <br><br>Happy Gaming!
     </div>
     <button id="solus-notice-close">Thanks, Got It!</button>
   </div>
@@ -2496,7 +2495,7 @@
 
 <script>
   (function() {
-    const KEY = 'solus_hk_notice_v1';
+    const KEY = 'solus_deltarune_notice_v1';
     if (localStorage.getItem(KEY)) return;
     const overlay = document.getElementById('solus-notice-overlay');
     overlay.style.display = 'flex';
