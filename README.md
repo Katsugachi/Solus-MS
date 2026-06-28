@@ -2,7 +2,7 @@
 
 An open source launcher for various programs and games including Hollow Knight, Slope, Minecraft 1.12.2 etc... <br>
 Written entirely in html (The launcher, not the games)<br>
-Opens games in a new tab, use fn + f11 to full screen. <br>
+Opens games in a new tab, use `fn + f11` to full screen. <br>
 As of right now there are `26` games on Solus MS. <br>
 Credit: bog/aukak and gn-math (bread) for main ports. I made a good few as well :) <br>
 Notice: Sorry about bugs, I am aware of a few and I'm working hard to fix them! Thanks! <br><br>
