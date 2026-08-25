@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <title>Solus MS</title>
@@ -88,8 +88,13 @@
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: #ffffff;
-        }       /* --- REFLECTION CLOAK CLASS --- */
-        .reflection-active {
+        }/* --- REFLECTION CLOAK CLASS ---
+        Applied to <html>, not <body>: a non-none filter on a non-root
+        element turns it into the containing block for position:fixed
+        descendants, which would un-anchor the mobile bottom nav and the
+        fullscreen game overlay (they would scroll with the page instead
+        of staying fixed). The root element is exempt from that rule. */
+        html.reflection-active {
             filter: grayscale(1) brightness(0.4) !important;
             transition: filter 0.4s ease;
         }
@@ -1477,7 +1482,11 @@
 
                 // --- Stats: record launch timestamp ---
                 const statsKey = isCustom ? `solus_stats_custom_${game.id}` : `solus_stats_static_${game.name}`;
-                const existing = JSON.parse(localStorage.getItem(statsKey) || '{}');
+                // Corrupted stats (manual edit, partial import) must not crash
+                // the launch handler - fall back to a fresh record.
+                let existing = {};
+                try { existing = JSON.parse(localStorage.getItem(statsKey) || '{}'); } catch (e) { existing = {}; }
+                if (!existing || typeof existing !== 'object') existing = {};
                 existing.name = game.name;
                 existing.lastPlayed = Date.now();
                 existing.totalMinutes = existing.totalMinutes || 0;
@@ -2023,7 +2032,7 @@
             }
 
             reflectionToggle.checked = savedReflection;
-            document.body.classList.toggle('reflection-active', savedReflection);
+            document.documentElement.classList.toggle('reflection-active', savedReflection);
 
             gameOverlayToggle.checked = localStorage.getItem('solus_overlay') === 'true';
             gameOverlayEnabled = gameOverlayToggle.checked;
@@ -2131,7 +2140,7 @@
        
         const reflectionToggle = document.getElementById('reflection-cloak-toggle');
         reflectionToggle.onchange = () => {
-            document.body.classList.toggle('reflection-active', reflectionToggle.checked);
+            document.documentElement.classList.toggle('reflection-active', reflectionToggle.checked);
             localStorage.setItem('solus_reflection', reflectionToggle.checked);
         };
        
@@ -2354,11 +2363,16 @@
                 dbList = indexedDB.databases ? await indexedDB.databases() : [{ name: 'SolusGamesDB', version: 1 }];
             } catch(e) { dbList = [{ name: 'SolusGamesDB', version: 1 }]; }
 
-            for (const { name, version } of dbList) {
-                if (!name || !version) continue;
+            for (const entry of dbList) {
+                const name = entry && entry.name;
+                if (!name) continue;
+                const version = entry.version;
                 try {
                     result[name] = await new Promise((resolve) => {
-                        const req = indexedDB.open(name, version);
+                        // Some browsers omit version in databases(); opening
+                        // without one still dumps the current database instead
+                        // of silently skipping it.
+                        const req = version ? indexedDB.open(name, version) : indexedDB.open(name);
                         req.onerror = () => resolve({});
                         req.onblocked = () => resolve({});
                         req.onupgradeneeded = () => resolve({});
@@ -2400,23 +2414,38 @@
                             let remaining = toRestore.length;
                             const checkDone = () => { if (--remaining === 0) { db.close(); resolve(); } };
                             for (const storeName of toRestore) {
+                                // Each store must decrement exactly once: a
+                                // failing transaction fires onerror AND
+                                // onabort, and the old double-decrement could
+                                // drive the counter past zero and resolve the
+                                // import while other stores were still writing
+                                // (or never resolve at all).
+                                let settled = false;
+                                const finish = () => { if (!settled) { settled = true; checkDone(); } };
                                 try {
                                     const tx = db.transaction(storeName, 'readwrite');
-                                    tx.onerror = tx.onabort = () => checkDone();
+                                    tx.onerror = tx.onabort = () => finish();
                                     const store = tx.objectStore(storeName);
                                     const records = dbData[storeName] || [];
                                     let i = 0;
                                     const putNext = () => {
-                                        if (i >= records.length) { checkDone(); return; }
-                                        const r = records[i++];
-                                        try {
-                                            const val = valueFromSerializable(r.value);
-                                            const r2 = store.keyPath ? store.put(val) : store.put(val, r.key);
-                                            r2.onsuccess = r2.onerror = putNext;
-                                        } catch(e) { putNext(); }
+                                        while (i < records.length) {
+                                            const r = records[i++];
+                                            try {
+                                                const val = valueFromSerializable(r.value);
+                                                const r2 = store.keyPath ? store.put(val) : store.put(val, r.key);
+                                                r2.onsuccess = () => putNext();
+                                                // A failed request aborts the whole
+                                                // transaction unless prevented;
+                                                // skip the bad record, keep the rest.
+                                                r2.onerror = (e) => { try { e.preventDefault(); } catch (_) {} putNext(); };
+                                                return;
+                                            } catch (e) { /* skip unusable record */ }
+                                        }
+                                        finish();
                                     };
                                     putNext();
-                                } catch(e) { checkDone(); }
+                                } catch(e) { finish(); }
                             }
                         };
                     });
@@ -2572,6 +2601,10 @@
     width: 100%;
     z-index: 99999;
     pointer-events: none;
+    /* Rapid taps on Back/Next must not trigger the browser's double-tap
+       zoom mid-tour (which rescales the viewport and throws off the
+       spotlight geometry). Pinch zoom stays available. */
+    touch-action: manipulation;
   }
   /* Click guards around the spotlight hole. Transparent while a target is
      highlighted (the ring's box-shadow does the dimming); carry the dim
@@ -2702,13 +2735,13 @@
     width: auto;
     padding: 10px 26px;
     border-radius: 8px;
-    background: linear-gradient(135deg, #339dff, #0066d6);
+    background: var(--tut-accent);
     font-size: 0.92rem;
     letter-spacing: 0.2px;
     transition: filter 0.2s, box-shadow 0.2s, transform 0.15s, opacity 0.2s;
   }
   #solus-tut-next:hover:not(:disabled) {
-    background: linear-gradient(135deg, #4daaff, #0a72e0);
+    background: #0060c0;
     box-shadow: 0 4px 16px rgba(0, 123, 255, 0.45);
     transform: translateY(-1px);
   }
@@ -2717,7 +2750,7 @@
   #solus-tut-next:disabled:hover {
     opacity: 0.45;
     cursor: not-allowed;
-    background: linear-gradient(135deg, #339dff, #0066d6);
+    background: var(--tut-accent);
     box-shadow: none;
     transform: none;
   }
@@ -2864,6 +2897,7 @@
     var reqEl = null, reqHandler = null, reqEventName = null, reqCount = 0;
     var guardEl = null, guardHandler = null;
     var glideUntil = 0, noanimTimer = null;
+    var cardSide = null; // sticky placement: 'above' | 'below' | 'left' | 'right'
 
     function setRect(el, l, t, w, h) {
       el.style.left = l + 'px';
@@ -2897,12 +2931,45 @@
       return nav.offsetHeight + 12;
     }
 
+    // The card is positioned only: its width comes from the stylesheet and
+    // its height from the content. Stamping an explicit height here used to
+    // freeze it - offsetHeight then kept returning the stale value, so short
+    // steps inherited the previous step's tall empty card.
+    function moveTo(el, l, t) {
+      var r = el.getBoundingClientRect();
+      if (Math.abs(r.left - l) > 120 || Math.abs(r.top - t) > 120) {
+        el.style.transition = 'none';
+        el.style.left = l + 'px';
+        el.style.top = t + 'px';
+        void el.offsetWidth; // flush so later small moves animate again
+        el.style.transition = '';
+      } else {
+        el.style.left = l + 'px';
+        el.style.top = t + 'px';
+      }
+    }
+
     function place() {
       var step = STEPS[cur];
       if (!step) return;
+      // Zero the overlay before measuring: #solus-tutorial AND its blocker
+      // children are absolutely positioned and stretch the document's
+      // scrollable area, so reading scrollHeight while any of their old sizes
+      // is still applied ratchets docH/docW upward forever - after the tall
+      // library step every shorter page dragged a giant dim void below the
+      // actual content. (Zeroing the root alone was not enough: the blockers'
+      // inline heights reach docH and keep the measurement pinned.)
+      root.style.height = '0px';
+      setRect(bTop, 0, 0, 0, 0);
+      setRect(bBottom, 0, 0, 0, 0);
+      setRect(bLeft, 0, 0, 0, 0);
+      setRect(bRight, 0, 0, 0, 0);
       var docH = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
       var docW = Math.max(document.documentElement.scrollWidth, document.body.scrollWidth, window.innerWidth);
-      root.style.height = docH + 'px';
+      // vh floor so the dim covers short pages; deliberately NOT part of docH,
+      // or a transiently enlarged viewport (fullpage screenshot capture) would
+      // inflate the document. Any such inflation self-heals on the next place.
+      root.style.height = Math.max(docH, window.innerHeight) + 'px';
       var vw = window.innerWidth, vh = window.innerHeight;
       var ox = window.scrollX || document.documentElement.scrollLeft || document.body.scrollLeft || 0;
       var oy = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
@@ -2926,6 +2993,14 @@
         var pad = 6;
         var l = r.left + ox - pad, t = r.top + oy - pad;
         var w = r.width + pad * 2, h = r.height + pad * 2;
+        // Keep the spotlight inside the viewport: edge-flush targets (the
+        // sidebar, the mobile bottom nav) pushed the padded ring past the
+        // screen edge where it got clipped invisible.
+        var cL = Math.max(l, ox + 2), cT = Math.max(t, oy + 2);
+        var cR = Math.min(l + w, ox + vw - 2), cB = Math.min(t + h, oy + vh - 2);
+        if (cR - cL < 8) cL = Math.max(ox + 2, cR - 8);
+        if (cB - cT < 8) cT = Math.max(oy + 2, cB - 8);
+        l = cL; t = cT; w = cR - cL; h = cB - cT;
         // blockers are invisible here, geometry only matters for click-blocking
         setRect(bTop, 0, 0, docW, t);
         setRect(bBottom, 0, t + h, docW, docH - (t + h));
@@ -2936,24 +3011,44 @@
         var cw = card.offsetWidth, ch = card.offsetHeight;
         var fitsBelow = (t + h + 14 + ch) <= floor;
         var fitsAbove = (t - 14 - ch) >= oy;
+        // Decide the side once per step and then keep it: the fits tests depend
+        // on the scroll offset, so re-deciding on every place() let the card
+        // flip between above and below the ring whenever anything scrolled the
+        // page, teleporting it between two document positions (it even raced
+        // pointer taps - the tap point kept landing where the card had just
+        // been). The ring is document-glued, so a frozen side keeps the whole
+        // assembly scroll-stable. Re-decide only if the card scrolled fully
+        // out of view.
+        var side = cardSide;
+        if (side === 'below' || side === 'above') {
+          var sTop = side === 'below' ? t + h + 14 : t - ch - 14;
+          if (sTop + ch < oy + 8 || sTop > oy + vh - 8) side = null;
+        } else {
+          side = null; // 'left'/'right'/unset: re-run the fresh decision below
+        }
+        if (!side) side = fitsBelow ? 'below' : (fitsAbove ? 'above' : null);
+        cardSide = side;
         var cardTop, cardLeft;
-        if (fitsBelow || fitsAbove) {
-          cardTop = fitsBelow ? t + h + 14 : t - ch - 14;
+        if (side) {
+          cardTop = side === 'below' ? t + h + 14 : t - ch - 14;
           cardLeft = Math.max(l, ox + 16);
           if (cardLeft + cw > ox + vw - 16) cardLeft = Math.max(ox + 16, ox + vw - cw - 16);
         } else if (l + w + 14 + cw <= ox + vw - 16) {
           // tall target with room alongside: park the card to its right, centered on it
+          cardSide = 'right';
           cardLeft = l + w + 14;
           cardTop = Math.min(Math.max(t + (h - ch) / 2, oy + 12), floor - ch - 12);
         } else if (l - 14 - cw >= ox + 16) {
+          cardSide = 'left';
           cardLeft = l - cw - 14;
           cardTop = Math.min(Math.max(t + (h - ch) / 2, oy + 12), floor - ch - 12);
         } else {
+          cardSide = null;
           cardTop = oy + 12;
           cardLeft = Math.max(l, ox + 16);
           if (cardLeft + cw > ox + vw - 16) cardLeft = Math.max(ox + 16, ox + vw - cw - 16);
         }
-        placeAt(card, cardLeft, cardTop, cw, ch);
+        moveTo(card, cardLeft, cardTop);
       } else {
         root.classList.remove('solus-tut-target');
         ring.classList.remove('solus-tut-on');
@@ -2963,7 +3058,7 @@
         setRect(bRight, 0, 0, 0, 0);
         var cw2 = card.offsetWidth, ch2 = card.offsetHeight;
         var cTop = Math.round(Math.max(oy + (vh - navPad - ch2) / 2, oy + 12));
-        placeAt(card, ox + Math.round((vw - cw2) / 2), cTop, cw2, ch2);
+        moveTo(card, ox + Math.round((vw - cw2) / 2), cTop);
       }
     }
 
@@ -3023,6 +3118,7 @@
         var t = typeof step.target === 'function' ? step.target() : document.querySelector(step.target);
         if (t) stepEl = step.expand ? (t.closest(step.expand) || t) : t;
       }
+      cardSide = null; // fresh placement decision per step
       stepLabel.textContent = 'Step ' + (cur + 1) + ' of ' + STEPS.length;
       titleLabel.textContent = step.title;
       bodyLabel.innerHTML = step.body;
@@ -3056,6 +3152,7 @@
       window.removeEventListener('resize', onResize);
       window.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('keydown', onKey, true);
+      if (ro) ro.disconnect();
     }
 
     function finish() {
@@ -3140,6 +3237,24 @@
     window.addEventListener('resize', onResize);
     window.addEventListener('scroll', onScroll, true);
     window.addEventListener('keydown', onKey, true);
+    // The library grid renders asynchronously: the first steps were placed
+    // against a nearly empty page and the dim/spotlight went stale the moment
+    // the covers landed. Any body size change (grid render, images loading)
+    // re-places the overlay. Absolute overlays don't affect body's border
+    // box, so this can't feed back into itself.
+    var ro = null;
+    if (typeof ResizeObserver === 'function') {
+      var roPending = false;
+      ro = new ResizeObserver(function () {
+        if (roPending) return;
+        roPending = true;
+        requestAnimationFrame(function () {
+          roPending = false;
+          if (cur >= 0) onResize();
+        });
+      });
+      ro.observe(document.body);
+    }
     root.style.display = 'block';
     go(0);
     // first placement happens at 0,0-less coords already, only then allow gliding
