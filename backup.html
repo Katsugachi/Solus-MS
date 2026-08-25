@@ -1,0 +1,2512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Solus MS</title>
+    <link rel="icon" type="image/png" href="favicon.ico" id="favicon-png">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" id="favicon-ico">
+    <style>
+        /* General Reset and Base Styles */
+        :root {
+            /* Default Dark Mode (Dark Blue Theme) */
+            --bg-dark: #1e283a; /* Deep, dark blue-grey */
+            --bg-medium: #28384d; /* Slightly lighter for panels */
+            --text-light: #e0e6ed; /* Off-white for general text */
+            --accent-blue: #007bff; /* Bright blue for accents/buttons */
+            --accent-hover: #0060c0; /* Darker blue on hover */
+            --border-color: #384e68; /* Subtle border color */
+           
+            /* Light Mode Variables (optional) */
+            --light-bg-dark: #f0f2f5;
+            --light-bg-medium: #ffffff;
+            --light-text-light: #333333;
+            --light-border-color: #cccccc;
+        }
+
+        /* --- LIGHT MODE THEME CLASS --- */
+        .light-theme {
+            --bg-dark: var(--light-bg-dark);
+            --bg-medium: var(--light-bg-medium);
+            --text-light: var(--light-text-light);
+            --border-color: var(--light-border-color);
+            color: var(--light-text-light);
+        }
+        /* --- DARK GLASS THEME --- */
+        .glass-theme {
+            --bg-dark: #050a12;
+            --bg-medium: rgba(15, 23, 42, 0.4);
+            --text-light: #ffffff;
+            --accent-blue: #007aff;
+            --accent-hover: #0a84ff;
+            --border-color: rgba(255, 255, 255, 0.15);
+           
+            /* Liquid Depth Background */
+            background:
+                radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.3) 0, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.2) 0, transparent 50%),
+                #050a12;
+            background-attachment: fixed;
+            color: #ffffff;
+        }
+
+        /* Thick Frosting & Specular Borders */
+        .glass-theme .game-card,
+        .glass-theme .settings-group,
+        .glass-theme .sidebar {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(40px) saturate(200%) brightness(0.8);
+            -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow:
+                0 8px 32px 0 rgba(0, 0, 0, 0.8),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05); /* Specular edge */
+        }
+
+        /* High-Definition Text */
+        .glass-theme h1, .glass-theme h2, .glass-theme h3 {
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            letter-spacing: 1px;
+        }
+
+        /* Interactive Elements */
+        .glass-theme .nav-item a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: brightness(1.2);
+        }
+
+        .glass-theme .nav-item a.active {
+            background: rgba(0, 122, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);
+        }
+
+        .glass-theme .text-input,
+        .glass-theme .textarea-input {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }       /* --- REFLECTION CLOAK CLASS --- */
+        .reflection-active {
+            filter: grayscale(1) brightness(0.4) !important;
+            transition: filter 0.4s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s, filter 0.3s,
+                        flex-direction 0.35s ease, padding-bottom 0.35s ease;
+        }
+
+        select.text-input {
+            appearance: none;
+            background: var(--bg-medium);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* Glass-specific Overrides */
+        .glass-theme select.text-input {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-theme select.text-input option {
+            background-color: #1a1a1a; /* Darker dropdown menu for readability */
+            color: white;
+        }
+        /* --- Sidebar Styling --- */
+        .sidebar {
+            width: 250px;
+            background-color: var(--bg-medium);
+            padding: 20px 0;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+            border-right: 1px solid var(--border-color);
+            flex-shrink: 0;
+            transition: background-color 0.3s, border-color 0.3s,
+                        width 0.35s ease, padding 0.35s ease,
+                        box-shadow 0.35s ease;
+        }
+
+        .sidebar h1 {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 0 15px;
+        }
+
+        .nav-item a {
+            display: block;
+            padding: 12px 15px;
+            margin-bottom: 5px;
+            color: var(--text-light);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .nav-item a:hover {
+            background-color: var(--bg-dark);
+        }
+
+        .nav-item a.active {
+            background-color: var(--accent-blue);
+            color: white;
+            font-weight: bold;
+        }
+
+        /* --- Main Content Area --- */
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .header {
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            transition: border-color 0.3s;
+        }
+
+        .header h2 {
+            font-size: 2rem;
+            color: var(--text-light);
+            font-weight: 300;
+        }
+
+        /* --- Game Grid Styling (Library) --- */
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .game-card {
+            background-color: var(--bg-medium);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s, background-color 0.3s;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .game-image-placeholder {
+            width: 100%;
+            height: 150px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #384e68;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.5);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .game-info {
+            padding: 15px;
+        }
+
+        .game-info h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .launch-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: var(--accent-blue);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+
+        .launch-btn:hover {
+            background-color: var(--accent-hover);
+            box-shadow: 0 0 10px var(--accent-blue);
+        }
+       
+        .delete-btn {
+            background-color: #dc3545;
+            margin-top: 5px;
+        }
+
+        .delete-btn:hover {
+            background-color: #c82333;
+            box-shadow: 0 0 10px #dc3545;
+        }
+       
+        .action-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        #settings-page, #about-page, #add-game-page {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .settings-group {
+            background-color: var(--bg-medium);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            transition: background-color 0.3s;
+        }
+
+        .settings-group h3 {
+            color: var(--accent-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+       
+        .form-group {
+            margin-bottom: 15px;
+        }
+       
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .text-input, .textarea-input, .file-input-container input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            border-radius: 4px;
+            transition: background-color 0.3s, border-color 0.3s;
+            font-size: 1rem;
+            resize: vertical;
+        }
+
+        .text-input:focus, .textarea-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+       
+        .textarea-input {
+            min-height: 150px;
+            font-family: Consolas, monospace;
+        }
+
+        .file-input-container {
+            display: block;
+            width: 100%;
+        }
+
+        .file-input-container input[type="file"] {
+            padding: 8px;
+        }
+       
+        .game-upload-options {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+       
+        .upload-option {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
+            text-align: center;
+        }
+       
+        .upload-option:hover {
+            border-color: var(--accent-blue);
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+       
+        .upload-option.active-option {
+            border-color: var(--accent-blue);
+            background-color: rgba(0, 123, 255, 0.2);
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+        }
+       
+        .radio-hidden {
+            display: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Toggle Switch Styling */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-blue);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .setting-item:first-child {
+            border-top: none;
+        }
+        /* Fix for About Page links to match text color */
+
+        .about-content a {
+            color: var(--text-light);
+            text-decoration: underline;
+            text-decoration-color: var(--accent-blue);
+            transition: color 0.2s;
+        }
+       
+        .about-content a:hover {
+            color: var(--accent-blue);
+        }
+
+        /* --- Search Bar --- */
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            width: 15px;
+            height: 15px;
+            color: var(--text-light);
+            opacity: 0.45;
+            pointer-events: none;
+            flex-shrink: 0;
+            transition: color 0.3s, opacity 0.2s;
+        }
+        .search-wrapper:focus-within .search-icon {
+            opacity: 0.8;
+            color: var(--accent-blue);
+        }
+        #library-search {
+            width: 240px;
+            padding: 8px 12px 8px 32px;
+            font-size: 0.9rem;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.2s;
+        }
+        #library-search:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+        }
+        #library-search::placeholder { opacity: 0.5; }
+        .glass-theme #library-search {
+            background: rgba(0,0,0,0.35);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #fff;
+        }
+        .light-theme #library-search {
+            background: #fff;
+            color: #333;
+            border-color: #ccc;
+        }
+
+        /* --- Stats Page --- */
+        #stats-page { max-width: 900px; margin: 0 auto; }
+
+        .stats-summary {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+
+        .stats-card {
+            flex: 1;
+            min-width: 160px;
+            background-color: var(--bg-medium);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px 24px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .stats-card .stats-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            opacity: 0.6;
+            margin-bottom: 8px;
+        }
+
+        .stats-card .stats-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            line-height: 1;
+        }
+
+        .glass-theme .stats-card {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(20px);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .stats-table-wrap {
+            background-color: var(--bg-medium);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .glass-theme .stats-table-wrap {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(20px);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .stats-table thead th {
+            background-color: var(--bg-dark);
+            color: var(--accent-blue);
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .glass-theme .stats-table thead th {
+            background: rgba(0,0,0,0.3);
+        }
+
+        .light-theme .stats-table thead th {
+            background: #e8edf2;
+        }
+
+        .stats-table tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.15s;
+        }
+
+        .stats-table tbody tr:last-child { border-bottom: none; }
+
+        .stats-table tbody tr:hover {
+            background-color: rgba(0,123,255,0.06);
+        }
+
+        .stats-table td {
+            padding: 12px 16px;
+            color: var(--text-light);
+            vertical-align: middle;
+        }
+
+        .stats-table td:nth-child(1) { font-weight: 600; }
+
+        .stats-empty {
+            text-align: center;
+            padding: 50px 20px;
+            opacity: 0.5;
+            font-size: 0.95rem;
+        }
+
+        .stats-table-title {
+            color: var(--accent-blue);
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 14px 16px 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* ===================================================
+           MOBILE MODE — activated by JS adding .mobile-mode
+           to <body>. Desktop is default, unchanged.
+           All mobile styles are scoped to body.mobile-mode.
+           =================================================== */
+
+        /* Bottom nav: hidden by default, slides up when mobile-mode activates */
+        .mobile-nav {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background-color: var(--bg-medium);
+            border-top: 1px solid var(--border-color);
+            z-index: 200;
+            -webkit-align-items: stretch;
+            align-items: stretch;
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.35s ease, opacity 0.3s ease;
+        }
+
+        body.mobile-mode .mobile-nav {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* ---- body.mobile-mode overrides ---- */
+        body.mobile-mode {
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 56px;
+        }
+
+        body.mobile-mode .sidebar {
+            width: 100%;
+            box-shadow: none;
+            border-right: none;
+            border-bottom: 1px solid var(--border-color);
+            display: -webkit-flex;
+            display: flex;
+            -webkit-flex-direction: row;
+            flex-direction: row;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-justify-content: space-between;
+            justify-content: space-between;
+            padding: 10px 16px;
+            -webkit-flex-shrink: 0;
+            flex-shrink: 0;
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: var(--bg-medium);
+        }
+
+        /* Sidebar title: smaller on mobile since it's in a top bar now */
+        body.mobile-mode .sidebar h1 {
+            font-size: 1.1rem;
+            margin-bottom: 0;
+            letter-spacing: 1px;
+            text-align: left;
+        }
+
+        body.mobile-mode .sidebar .nav-list {
+            display: none;
+        }
+
+        body.mobile-mode .main-content {
+            padding: 16px;
+            -webkit-flex: 1;
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Game grid: auto-fill with minmax so ~4 across at full width,
+           shrinks to 2 on narrow screens naturally */
+        body.mobile-mode .game-grid {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 14px;
+        }
+
+        /* Card image: slightly shorter on mobile to show more cards */
+        body.mobile-mode .game-image-placeholder {
+            height: 120px;
+        }
+
+        /* Search bar: full width on mobile */
+        body.mobile-mode #library-search {
+            width: 100%;
+        }
+
+        /* Library header: wrap so search goes below title on narrow screens */
+        body.mobile-mode #library-page > .header {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        body.mobile-mode .search-wrapper {
+            width: 100%;
+        }
+
+        /* Settings: stack label + control vertically since screen is narrow */
+        body.mobile-mode .setting-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 12px 0;
+        }
+
+        /* All fixed-width inputs become full-width on mobile */
+        body.mobile-mode .setting-item input.text-input,
+        body.mobile-mode .setting-item select.text-input,
+        body.mobile-mode #tab-name-input,
+        body.mobile-mode #favicon-url-input,
+        body.mobile-mode #panic-url-input,
+        body.mobile-mode #panic-background-url,
+        body.mobile-mode #panic-mode-select,
+        body.mobile-mode #theme-select {
+            width: 100% !important;
+        }
+
+        body.mobile-mode #panic-background-setting {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        body.mobile-mode #open-background-tab {
+            width: 100% !important;
+            margin-left: 0 !important;
+            margin-top: 6px;
+        }
+
+        body.mobile-mode #aboutblank-btn {
+            width: 100% !important;
+        }
+
+        body.mobile-mode #panic-settings-group {
+            padding-left: 0;
+        }
+
+        /* Upload options: stack vertically on mobile */
+        body.mobile-mode .game-upload-options {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Stats table: allow horizontal scroll on narrow screens */
+        body.mobile-mode .stats-table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* About page links: wrap long URLs */
+        body.mobile-mode .setting-item a {
+            word-break: break-all;
+        }
+
+        /* Landscape compact mode for tiny phones (e.g. iPhone 6 landscape) */
+        body.mobile-mode.landscape-small {
+            padding-bottom: 48px;
+        }
+
+        body.mobile-mode.landscape-small .mobile-nav {
+            height: 48px;
+        }
+
+        body.mobile-mode.landscape-small .mobile-nav-item {
+            min-height: 48px;
+            font-size: 0.55rem;
+        }
+
+        body.mobile-mode.landscape-small .mobile-nav-item svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        body.mobile-mode.landscape-small .sidebar {
+            padding: 6px 12px;
+        }
+
+        body.mobile-mode.landscape-small .game-grid {
+            gap: 8px;
+        }
+
+        body.mobile-mode.landscape-small .game-image-placeholder {
+            height: 80px;
+        }
+
+        body.mobile-mode.landscape-small .main-content {
+            padding: 8px;
+        }
+
+        /* Tiny screens (320px wide) */
+        body.mobile-mode.tiny-screen .main-content {
+            padding: 8px;
+        }
+
+        body.mobile-mode.tiny-screen .mobile-nav-item {
+            font-size: 0.5rem;
+        }
+
+        /* Glass/light theme overrides for mobile nav */
+        body.mobile-mode.glass-theme .mobile-nav {
+            background: rgba(5, 10, 18, 0.92);
+        }
+
+        body.mobile-mode.light-theme .mobile-nav {
+            background-color: #ffffff;
+            border-top-color: #cccccc;
+        }
+
+        /* Safari fallback: no backdrop-filter support */
+        @supports not (backdrop-filter: blur(1px)) {
+            .glass-theme .game-card,
+            .glass-theme .settings-group,
+            .glass-theme .sidebar {
+                background: rgba(15, 23, 42, 0.95);
+                -webkit-backdrop-filter: none;
+                backdrop-filter: none;
+            }
+        }
+
+        /* ---- In-page game overlay (when Game Overlay toggle is on) ---- */
+        #game-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #000;
+            flex-direction: column;
+        }
+
+        #game-overlay.active {
+            display: flex;
+        }
+
+        #game-overlay-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px;
+            background: #111;
+            border-bottom: 1px solid #333;
+            flex-shrink: 0;
+            height: 36px;
+        }
+
+        #game-overlay-title {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 0.5px;
+        }
+
+        #game-overlay-close {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            line-height: 1;
+            transition: background 0.15s, color 0.15s;
+            font-family: inherit;
+        }
+
+        #game-overlay-close:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        #game-overlay-frame {
+            flex: 1;
+            width: 100%;
+            border: none;
+            display: block;
+        }
+        .mobile-nav-item {
+            -webkit-flex: 1;
+            flex: 1;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-flex-direction: column;
+            flex-direction: column;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-justify-content: center;
+            justify-content: center;
+            padding: 4px 2px;
+            gap: 2px;
+            cursor: pointer;
+            color: var(--text-light);
+            opacity: 0.55;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-transition: opacity 0.15s, color 0.15s;
+            transition: opacity 0.15s, color 0.15s;
+            border: none;
+            background: none;
+            font-family: inherit;
+            min-height: 44px;
+        }
+
+        .mobile-nav-item.active {
+            opacity: 1;
+            color: var(--accent-blue);
+        }
+
+        .mobile-nav-item svg {
+            width: 22px;
+            height: 22px;
+            -webkit-flex-shrink: 0;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h1>Solus MS</h1>
+        <ul class="nav-list">
+            <li class="nav-item"><a href="#" id="nav-library" class="active">Library</a></li>
+            <li class="nav-item"><a href="#" id="nav-add-game">Add New Game</a></li>
+            <li class="nav-item"><a href="#" id="nav-stats">Stats</a></li>
+            <li class="nav-item"><a href="#" id="nav-settings">Settings</a></li>
+            <li class="nav-item"><a href="#" id="nav-about">About</a></li>
+        </ul>
+    </div>
+   
+    <div class="main-content">
+       
+        <div id="library-page">
+            <header class="header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <h2>Game Library</h2>
+                <div class="search-wrapper">
+                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="8.5" cy="8.5" r="5.5"/>
+                        <line x1="13" y1="13" x2="18" y2="18"/>
+                    </svg>
+                    <input type="search" id="library-search" class="text-input" placeholder="Search games...">
+                </div>
+            </header>
+
+            <div class="game-grid" id="game-library-grid"></div>
+            <p id="empty-library-message" style="text-align: center; padding: 50px; color: #7f8fa6;" class="hidden">
+                 No games match your search. Try a different name!
+             </p>
+        </div>
+
+        <div id="add-game-page" style="display: none;">
+            <header class="header">
+                <h2>Add New Game</h2>
+            </header>
+           
+            <form id="add-game-form" class="settings-group">
+                <div class="form-group">
+                    <label for="game-name">Game Name</label>
+                    <input type="text" id="game-name" class="text-input" placeholder="e.g., Ori And The Blind Forest">
+                </div>
+               
+                <h3>Cover Art Source (Optional)</h3>
+                <div class="game-upload-options">
+                    <div class="upload-option active-option" data-option="cover-url">
+                        <label>Image Link Address</label>
+                        <input type="radio" name="cover-source" id="cover-url-radio" value="url" class="radio-hidden" checked>
+                    </div>
+                    <div class="upload-option" data-option="cover-file">
+                        <label>Upload Image File</label>
+                        <input type="radio" name="cover-source" id="cover-file-radio" value="file" class="radio-hidden">
+                    </div>
+                </div>
+               
+                <div class="form-group" id="image-url-group">
+                    <label for="cover-url">Cover Image URL</label>
+                    <input type="url" id="cover-url" class="text-input" placeholder="https://example.com/game-cover.png">
+                </div>
+               
+                <div class="form-group hidden" id="image-file-group">
+                    <label for="cover-file">Upload Cover Image</label>
+                    <div class="file-input-container">
+                        <input type="file" id="cover-file" accept="image/*">
+                    </div>
+                </div>
+
+                <h3>HTML Content Source (Required)</h3>
+                <div class="game-upload-options">
+                    <div class="upload-option active-option" data-option="html-paste">
+                        <label>Paste HTML Code</label>
+                        <input type="radio" name="html-source" id="html-paste-radio" value="paste" class="radio-hidden" checked>
+                    </div>
+                    <div class="upload-option" data-option="html-file">
+                        <label>Upload HTML File</label>
+                        <input type="radio" name="html-source" id="html-file-radio" value="file" class="radio-hidden">
+                    </div>
+                </div>
+               
+                <div class="form-group" id="html-paste-group">
+                    <label for="html-code">Paste Full HTML File Content Here (index.html or similar)</label>
+                    <textarea id="html-code" class="textarea-input" name="html-code" placeholder="<!DOCTYPE html>... the full HTML code..."></textarea>
+                </div>
+               
+                <div class="form-group hidden" id="html-file-group">
+                    <label for="html-file">Upload HTML File (.html or .htm)</label>
+                    <div class="file-input-container">
+                        <input type="file" id="html-file" accept=".html,.htm">
+                    </div>
+                </div>
+               
+                <button type="submit" class="launch-btn" style="margin-top: 20px;">Save Game to Library</button>
+            </form>
+           
+            <p id="game-status-message" style="margin-top: 20px; text-align: center;"></p>
+        </div>
+       
+        <div id="settings-page" style="display: none;">
+            <header class="header">
+                <h2>Application Settings</h2>
+            </header>
+           
+            <div class="settings-group">
+                <h3>Interface</h3>
+                <div class="setting-item">
+                    <span>Tab Cloak (Change Tab Display Name)</span>
+                    <input type="text" id="tab-name-input" class="text-input" placeholder="e.g., Google" style="width: 250px;">
+                </div>
+                <div class="setting-item">
+                    <span>Tab Logo Cloak URL (Change Tab Display Logo)</span>
+                    <div style="text-align: right;">
+                        <input type="text" id="favicon-url-input" class="text-input" placeholder="https://google.com/favicon.ico" style="width: 250px;">
+                        <br><a href="https://katsugachi.github.io/Favicon-Yoinker/" target="_blank" style="color: var(--accent-blue); font-size: 0.85rem; text-decoration: none;">Tab Cloak Logo Fetcher</a>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span>Invisibility Cloak (Hide Tab When Unfocused)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="invisibility-cloak-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <span>Panic Key (Press ESC to Quick-Switch)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="panic-key-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="panic-settings-group" style="display: none; flex-direction: column; gap: 10px; padding-left: 20px; margin-top: 10px;">
+                    <div class="setting-item" style="border-top: none; padding-top: 0;">
+                        <span>Panic Mode</span>
+                        <select id="panic-mode-select" class="text-input" style="width: 200px;">
+                            <option value="redirect">Simple Redirect</option>
+                            <option value="background">Background Tab Switch</option>
+                        </select>
+                    </div>
+                    <div class="setting-item" id="panic-redirect-setting" style="border-top: none;">
+                        <span>Redirect URL</span>
+                        <input type="text" id="panic-url-input" class="text-input" placeholder="https://classroom.google.com" style="width: 250px;">
+                    </div>
+                    <div class="setting-item" id="panic-background-setting" style="display: none; border-top: none;">
+                        <span>Background Tab URL</span>
+                        <input type="text" id="panic-background-url" class="text-input" placeholder="https://classroom.google.com" style="width: 250px;">
+                        <button class="launch-btn" id="open-background-tab" style="width: 150px; padding: 8px; margin-left: 10px;">Open Background Tab</button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span>about:blank Cloak (Hide in Blank Page)</span>
+                    <button class="launch-btn" id="aboutblank-btn" style="width: 200px; padding: 8px;">Open in about:blank</button>
+                </div>
+                <div class="setting-item">
+                    <span>Reflection Cloak (Distance View Protection)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="reflection-cloak-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <h3>Launch Options</h3>
+                <div class="setting-item">
+                    <span>Default Game Directory</span>
+                    <input type="text" class="text-input" value="C:/SolusMS/games/" style="width: 300px;">
+                </div>
+                <div class="setting-item">
+                    <span>Enable Game Overlay</span>
+                    <label class="switch">
+                        <input type="checkbox" id="game-overlay-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <span>Display Mode</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:0.85rem; opacity:0.7;" id="display-mode-label-desktop">Desktop</span>
+                        <label class="switch">
+                            <input type="checkbox" id="display-mode-toggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="font-size:0.85rem; opacity:0.7;" id="display-mode-label-mobile">Mobile</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <h3>Library Backup</h3>
+                <div class="setting-item">
+                    <div>
+                        <span>Export Library</span>
+                        <div style="font-size:0.78rem; opacity:0.55; margin-top:2px;">Downloads all game saves (localStorage + IndexedDB), custom games & settings</div>
+                    </div>
+                    <button class="launch-btn" id="export-library-btn" style="width:160px; padding:8px; flex-shrink:0;">Export Backup</button>
+                </div>
+                <div class="setting-item">
+                    <div>
+                        <span>Import Backup</span>
+                        <div style="font-size:0.78rem; opacity:0.55; margin-top:2px;">Restores all game saves (localStorage + IndexedDB), custom games & settings</div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0;">
+                        <button class="launch-btn" id="import-library-btn" style="width:160px; padding:8px;">Import Library</button>
+                        <input type="file" id="import-library-file" accept=".json" style="display:none;">
+                        <div id="import-library-status" style="font-size:0.78rem; opacity:0.7; text-align:right;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="about-page" style="display: none;">
+            <header class="header">
+                <h2>About Solus MS</h2>
+            </header>
+           
+            <div class="about-content">
+                <p style="margin-bottom: 15px;">
+                    Solus MS is a custom steam-like launching interface designed by katsugachi on GitHub.<br><br><strong>Disclaimer & Terms of Use</strong> <br>This website is intended for personal entertainment use only. <br>Users are entirely responsible for complying with their local institution's policies, rules, and network guidelines (including schools, universities, and workplaces).<br> The creators and hosts of this website accept no liability for any disciplinary actions, restricted access, or consequences resulting from unauthorized use during school or work hours. <br>By continuing to use this site, you agree that you are doing so at your own risk and responsibility. <br><br> For Requests, Reviews And Discussion, Comment In Issues in the <a href="https://github.com/Katsugachi/Solus-MS">Official Github Repo</a>
+                </p>
+
+                <div class="settings-group">
+                    <h3>Version Details</h3>
+                    <div class="setting-item">
+                        <span>Application Version</span>
+                        <strong>3.0.0 (Stats & Search)</strong>
+                    </div>
+                    <div class="setting-item">
+                      <span>Interface Theme</span>
+                      <select id="theme-select" class="text-input" style="width: 200px;">
+                          <option value="dark">Deep Blue (Dark)</option>
+                          <option value="light">Light Mode</option>
+                          <option value="glass">Glass</option>
+                      </select>
+                     </div>
+                     <div class="setting-item">
+                        <strong>Alternate Links</strong>
+                    </div>
+                     <div class="setting-item">
+                        <span>Official Link - Github Pages</span>
+                        <a href="https://katsugachi.github.io/Solus-MS/">https://katsugachi.github.io/Solus-MS/</a>
+                    </div>
+                     <div class="setting-item">
+                        <span>Cloudflare Pages</span>
+                        <a href="https://solus-ms.pages.dev/">https://solus-ms.pages.dev/</a>
+                    </div>
+                     <div class="setting-item">
+                        <span>Vercel</span>
+                        <a href="https://solus-ms.vercel.app/">https://solus-ms.vercel.app/</a>
+                    </div>
+                     <div class="setting-item">
+                        <span>Netlify</span>
+                        <a href="https://solus-ms.netlify.app/">https://solus-ms.netlify.app/</a>
+                    </div>
+                     <div class="setting-item">
+                        <span>Google Translate?</span>
+                        <a href="https://translate.google.com/translate?sl=auto&tl=en&u=https://katsugachi.github.io/Solus-MS/">https://translate.google.com/auto/https://katsugachi.github.io/Solus-MS/</a>
+                    </div>
+                     <div class="setting-item">
+                        <span>Google Sites</span>
+                        <a href="https://sites.google.com/view/solusms/home">https://sites.google.com/view/solusms/home</a>
+                    </div>
+                     <div class="setting-item">
+                        <span>Secret Game</span>
+                        <a href=https://coffee-tea-and-games.github.io/Claude---Go-/>???</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Stats Page -->
+        <div id="stats-page" style="display: none;">
+            <header class="header">
+                <h2>Stats</h2>
+            </header>
+
+            <div id="stats-page-content">
+                <!-- Rendered by JS -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- In-page game overlay -->
+    <div id="game-overlay">
+        <div id="game-overlay-bar">
+            <span id="game-overlay-title">Playing...</span>
+            <button id="game-overlay-close" title="Close game">✕ Close</button>
+        </div>
+        <iframe id="game-overlay-frame" allowfullscreen allow="autoplay; fullscreen"></iframe>
+    </div>
+
+    <!-- Mobile bottom nav — must be in DOM before the script runs -->
+    <nav class="mobile-nav" id="mobile-nav" aria-label="Main navigation">
+        <button class="mobile-nav-item active" id="mnav-library" aria-label="Library">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="7" height="18" rx="1"/><rect x="9.5" y="3" width="5" height="18" rx="1"/><rect x="16" y="3" width="6" height="12" rx="1"/></svg>
+            Library
+        </button>
+        <button class="mobile-nav-item" id="mnav-add-game" aria-label="Add Game">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            Add
+        </button>
+        <button class="mobile-nav-item" id="mnav-stats" aria-label="Stats">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Stats
+        </button>
+        <button class="mobile-nav-item" id="mnav-settings" aria-label="Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Settings
+        </button>
+        <button class="mobile-nav-item" id="mnav-about" aria-label="About">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            About
+        </button>
+    </nav>
+   
+    <script>
+        const staticGames = [
+            { name: "Hollow Knight", cover: "hk.jpg", url: "StrHK.html" },
+            { name: "Minecraft 1.21.6", cover: "minecraft.jpg", url: "mc1122.html" },
+            { name: "Geometry Dash Lite", cover: "gd.png", url: "gd.html" },
+            { name: "Undertale", cover: "undertale.png", url: "undertale.html" },
+            { name: "Deltarune", cover: "deltarune.png", url: "deltarune.html" },
+            { name: "Balatro", cover: "balatro.jpg", url: "balatro.html" },
+            { name: "Celeste", cover: "celeste.jpg", url: "celeste.html" },
+            { name: "WOIM", cover: "woim.jpg", url: "woim.html" },
+            { name: "OMORI", cover: "omori.png", url: "omori.html" },
+            { name: "Sheepy : A Short Adventure", cover: "sheepy.png", url: "sheepy.html" },
+            { name: "Stardew Valley", cover: "stardew.png", url: "stardew.html" },
+            { name: "Just Shapes & Beats", cover: "jsab.png", url: "jsab.html" },
+            { name: "OSU!", cover: "osu.png", url: "osu.html" },
+            { name: "Level Devil", cover: "leveldevil.png", url: "leveldevil.html" },
+            { name: "Baldur's Gate 2", cover: "bg2.png", url: "https://katsugachi.github.io/BG2/" },
+            { name: "Untitled Goose Game", cover: "utgg.jpg", url: "utgg.html" },
+            { name: "Among Us", cover: "ag.png", url: "amongus.html" },
+            { name: "Cuphead", cover: "cuphead.png", url: "cuphead.html" },
+            { name: "Terraria", cover: "terraria.jpg", url: "terraria.html" },
+            { name: "Crossy Road", cover: "cross.png", url: "cross.html" },
+            { name: "Slope", cover: "slope.jpg", url: "Slope.html" },
+            { name: "Undertale Yellow", cover: "uy.png", url: "undertaley.html" },
+            { name: "Final Fantasy VII", cover: "ff7.png", url: "ff7.html" },
+            { name: "Run 3", cover: "run-3.png", url: "run3.html" },
+            { name: "Legend Of Zelda: Ocarina Of Time", cover: "zelda.png", url: "zelda.html" },
+            { name: "Mario Kart DS", cover: "mariods.png", url: "mariods.html" },
+            { name: "Binding Of Isaac: Wrath Of The Lamb", cover: "bi.png", url: "bi.html" },
+            { name: "PolyTrack", cover: "pt.jpg", url: "pt.html" },
+
+        ];
+
+        let db;
+        const DB_NAME = 'SolusGamesDB';
+        const STORE_NAME = 'customGames';
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                if (!window.indexedDB) {
+                    reject('IndexedDB not supported.');
+                    return;
+                }
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                };
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+                request.onerror = () => reject('Failed to open IndexedDB.');
+            });
+        }
+       
+        function saveGame(game) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.add(game);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject(event.target.error);
+            });
+        }
+       
+        function getAllGames() {
+            return new Promise((resolve, reject) => {
+                if (!db) return resolve([]);
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject(event.target.error);
+            });
+        }
+
+        function deleteGame(gameId) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.delete(gameId);
+                request.onsuccess = () => resolve();
+                request.onerror = (event) => reject(event.target.error);
+            });
+        }
+
+        const gameLibraryGrid = document.getElementById('game-library-grid');
+        const emptyMessage = document.getElementById('empty-library-message');
+        let gameOverlayEnabled = false;
+
+        function createGameCard(game, isCustom = false) {
+            const card = document.createElement('div');
+            card.className = 'game-card';
+            const coverStyle = game.cover ? `background-image: url('${game.cover}');` : '';
+            let launchUrl = isCustom ? URL.createObjectURL(new Blob([game.htmlContent], { type: 'text/html' })) : game.url;
+
+            card.innerHTML = `
+                <div class="game-image-placeholder" style="${coverStyle}">
+                    ${game.cover ? '' : game.name}
+                </div>
+                <div class="game-info">
+                    <h3>${game.name}</h3>
+                    <div class="action-group">
+                        <a href="${launchUrl}" class="launch-btn" data-game-url="${launchUrl}" target="_blank">Launch</a>
+                        ${isCustom ? `<button class="launch-btn delete-btn" data-game-id="${game.id}" style="flex-grow: 0.5;">Delete</button>` : ''}
+                    </div>
+                </div>
+            `;
+           
+            const launchBtn = card.querySelector('.launch-btn');
+            launchBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                // --- Stats: record launch timestamp ---
+                const statsKey = isCustom ? `solus_stats_custom_${game.id}` : `solus_stats_static_${game.name}`;
+                const existing = JSON.parse(localStorage.getItem(statsKey) || '{}');
+                existing.name = game.name;
+                existing.lastPlayed = Date.now();
+                existing.totalMinutes = existing.totalMinutes || 0;
+                localStorage.setItem(statsKey, JSON.stringify(existing));
+
+                const tabName = localStorage.getItem('solus_tabName') || 'Solus MS - Game Launcher';
+                const favicon = localStorage.getItem('solus_favicon') || 'favicon.ico';
+                const invisEnabled = localStorage.getItem('solus_invis') === 'true';
+                const panicEnabled = localStorage.getItem('solus_panicEnabled') === 'true';
+                const savedPanicMode = localStorage.getItem('solus_panicMode') || 'redirect';
+                const savedPanicUrl = localStorage.getItem('solus_panicUrl') || 'https://classroom.google.com';
+
+                // --- Game Overlay: open in same tab as a fullscreen iframe ---
+                if (gameOverlayEnabled) {
+                    const overlayEl = document.getElementById('game-overlay');
+                    const overlayFrame = document.getElementById('game-overlay-frame');
+                    const overlayTitle = document.getElementById('game-overlay-title');
+                    overlayTitle.textContent = game.name;
+                    overlayFrame.src = launchUrl;
+                    overlayEl.classList.add('active');
+
+                    // Playtime: track session start, update on close
+                    const _sessionStart = Date.now();
+                    const _closeBtn = document.getElementById('game-overlay-close');
+                    const _closeHandler = () => {
+                        overlayEl.classList.remove('active');
+                        overlayFrame.src = '';
+                        const elapsed = Math.round((Date.now() - _sessionStart) / 60000);
+                        const cur = JSON.parse(localStorage.getItem(statsKey) || '{}');
+                        cur.totalMinutes = (cur.totalMinutes || 0) + Math.max(0, elapsed);
+                        localStorage.setItem(statsKey, JSON.stringify(cur));
+                        _closeBtn.removeEventListener('click', _closeHandler);
+                    };
+                    _closeBtn.addEventListener('click', _closeHandler);
+
+                    // Panic key still works in overlay mode
+                    if (panicEnabled) {
+                        const _panicHandler = (e) => {
+                            if (e.key === 'Escape') {
+                                e.preventDefault();
+                                overlayEl.classList.remove('active');
+                                overlayFrame.src = '';
+                                document.removeEventListener('keydown', _panicHandler);
+                                window.location.href = savedPanicUrl;
+                            }
+                        };
+                        document.addEventListener('keydown', _panicHandler);
+                    }
+                    return;
+                }
+
+                // --- New tab mode (default) ---
+                const isMobileSafari = /iP(hone|ad|od)/i.test(navigator.userAgent) &&
+                    /WebKit/i.test(navigator.userAgent) &&
+                    !/CriOS|FxiOS|EdgiOS/i.test(navigator.userAgent);
+
+                if (isMobileSafari) {
+                    window.open(launchUrl, '_blank') || (window.location.href = launchUrl);
+                    return;
+                }
+
+                const win = window.open('', '_blank');
+                if (!win) { window.open(launchUrl, '_blank') || (window.location.href = launchUrl); return; }
+                win.document.write(`<!DOCTYPE html><html><head><title>${tabName}</title><link rel="icon" id="tab-favicon" href="${favicon}"><style>*{margin:0;padding:0;box-sizing:border-box}body{width:100vw;height:100vh;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:none;display:block}</style></head><body><iframe src="${launchUrl}" allowfullscreen allow="autoplay; fullscreen"></iframe><script>if(typeof BroadcastChannel!=='undefined'){const _bc=new BroadcastChannel('solus_playtime');const _t=Date.now();window.addEventListener('beforeunload',()=>_bc.postMessage({statsKey:${JSON.stringify(statsKey)},elapsed:Math.round((Date.now()-_t)/60000)}));}${invisEnabled?`const _favEl=document.getElementById('tab-favicon');document.addEventListener('visibilitychange',()=>{if(document.hidden){document.title='\\u3164';_favEl.href='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';}else{document.title=${JSON.stringify(tabName)};_favEl.href=${JSON.stringify(favicon)};}});`:''}${panicEnabled?`document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();window.location.href=${JSON.stringify(savedPanicUrl)};}});`:''}<\/script></body></html>`);
+                win.document.close();
+            });
+           
+            if (isCustom) {
+                card.querySelector('.delete-btn').addEventListener('click', async (e) => {
+                    const gameId = parseInt(e.target.dataset.gameId);
+                    if (confirm(`Delete ${game.name}?`)) {
+                        await deleteGame(gameId);
+                        loadGames();
+                    }
+                });
+            }
+            return card;
+        }
+
+        // --- BroadcastChannel: receive playtime when a game tab closes ---
+        // BroadcastChannel is not available in older Safari — guard it
+        if (typeof BroadcastChannel !== 'undefined') {
+            const _playtimeChannel = new BroadcastChannel('solus_playtime');
+            _playtimeChannel.onmessage = (e) => {
+                const { statsKey, elapsed } = e.data;
+                if (!statsKey || elapsed == null) return;
+                try {
+                    const current = JSON.parse(localStorage.getItem(statsKey) || '{}');
+                    current.totalMinutes = (current.totalMinutes || 0) + Math.max(0, elapsed);
+                    localStorage.setItem(statsKey, JSON.stringify(current));
+                } catch(err) { console.error('Playtime update failed:', err); }
+            };
+        }
+
+        let allCustomGames = [];
+
+        async function loadGames(filterQuery = '') {
+            gameLibraryGrid.innerHTML = '';
+            const q = filterQuery.toLowerCase();
+
+            const filteredStatic = staticGames.filter(g => g.name.toLowerCase().includes(q));
+            filteredStatic.forEach(game => gameLibraryGrid.appendChild(createGameCard(game, false)));
+
+            try {
+                allCustomGames = await getAllGames();
+                const filteredCustom = allCustomGames.filter(g => g.name.toLowerCase().includes(q));
+                filteredCustom.forEach(game => gameLibraryGrid.appendChild(createGameCard(game, true)));
+                const total = filteredStatic.length + filteredCustom.length;
+                emptyMessage.classList.toggle('hidden', total > 0);
+                if (total === 0 && q) {
+                    emptyMessage.textContent = `No games match "${filterQuery}". Try a different search!`;
+                } else if (total === 0) {
+                    emptyMessage.textContent = 'Your library is empty. Add a new game using the "Add New Game" tab!';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        // Wire up search input
+        document.getElementById('library-search').addEventListener('input', function() {
+            loadGames(this.value);
+        });
+
+        const navLibrary = document.getElementById('nav-library');
+        const navSettings = document.getElementById('nav-settings');
+        const navAbout = document.getElementById('nav-about');
+        const navAddGame = document.getElementById('nav-add-game');
+        const navStats = document.getElementById('nav-stats');
+       
+        const libraryPage = document.getElementById('library-page');
+        const settingsPage = document.getElementById('settings-page');
+        const aboutPage = document.getElementById('about-page');
+        const addGamePage = document.getElementById('add-game-page');
+        const statsPage = document.getElementById('stats-page');
+        const themeSelect = document.getElementById('theme-select');
+        const themeToggle = document.getElementById('theme-toggle');
+        const mainHeader = document.querySelector('.header h2');
+
+        // Declared here so showPage can reference it
+        const mobileNavMap = {
+            'mnav-library':  'library',
+            'mnav-add-game': 'add-game',
+            'mnav-stats':    'stats',
+            'mnav-settings': 'settings',
+            'mnav-about':    'about',
+        };
+
+        function showPage(pageId) {
+            [libraryPage, settingsPage, aboutPage, addGamePage, statsPage].forEach(p => p.style.display = 'none');
+            [navLibrary, navSettings, navAbout, navAddGame, navStats].forEach(n => n.classList.remove('active'));
+
+            const config = {
+                'library': { page: libraryPage, nav: navLibrary, text: 'Game Library', action: loadGames },
+                'settings': { page: settingsPage, nav: navSettings, text: 'Application Settings' },
+                'about': { page: aboutPage, nav: navAbout, text: 'About Solus MS' },
+                'add-game': { page: addGamePage, nav: navAddGame, text: 'Add New Game' },
+                'stats': { page: statsPage, nav: navStats, text: 'Stats', action: renderStats }
+            };
+
+            const target = config[pageId];
+            target.page.style.display = 'block';
+            target.nav.classList.add('active');
+            mainHeader.textContent = target.text;
+            if (target.action) target.action();
+
+            // Sync mobile bottom nav active state
+            document.querySelectorAll('.mobile-nav-item').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            var mobileBtnId = Object.keys(mobileNavMap || {}).find(function(k) { return mobileNavMap[k] === pageId; });
+            if (mobileBtnId) {
+                var mobileBtn = document.getElementById(mobileBtnId);
+                if (mobileBtn) mobileBtn.classList.add('active');
+            }
+        }
+
+        navLibrary.onclick = (e) => { e.preventDefault(); showPage('library'); };
+        navSettings.onclick = (e) => { e.preventDefault(); showPage('settings'); };
+        navAbout.onclick = (e) => { e.preventDefault(); showPage('about'); };
+        navAddGame.onclick = (e) => { e.preventDefault(); showPage('add-game'); };
+        navStats.onclick = (e) => { e.preventDefault(); showPage('stats'); };
+
+        // =====================================================
+        // MOBILE MODE SYSTEM
+        // =====================================================
+
+        // Detect if the device is actually mobile (touch + narrow viewport)
+        function detectIsMobile() {
+            var hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            var narrow = window.innerWidth <= 900;
+            // Also catch iPad-style tablets in landscape reporting as desktop
+            var mobileUA = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            return hasTouch && (narrow || mobileUA);
+        }
+
+        // Apply or remove landscape-small class for tiny landscape phones
+        function updateLandscapeClass() {
+            var isLandscape = window.innerWidth > window.innerHeight;
+            var smallHeight = window.innerHeight < 500;
+            document.body.classList.toggle('landscape-small', isLandscape && smallHeight);
+            // tiny-screen: 320px wide or less
+            document.body.classList.toggle('tiny-screen', window.innerWidth <= 340);
+        }
+
+        // Sync the mobile nav active tab indicator — handled inside showPage directly
+
+        // Wire mobile bottom nav buttons
+        // Use a wrapper function to lock in pageId per iteration (avoids JS closure-over-loop bug)
+        function wireMobileNavBtn(btnId, pageId) {
+            var btn = document.getElementById(btnId);
+            if (btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showPage(pageId);
+                });
+            }
+        }
+        Object.keys(mobileNavMap).forEach(function(btnId) {
+            wireMobileNavBtn(btnId, mobileNavMap[btnId]);
+        });
+
+        // Core: apply or remove mobile-mode class, update toggle UI
+        function setMobileMode(enabled, isAuto) {
+            document.body.classList.toggle('mobile-mode', enabled);
+            if (enabled) updateLandscapeClass();
+            const toggle = document.getElementById('display-mode-toggle');
+            const deskLabel = document.getElementById('display-mode-label-desktop');
+            const mobLabel = document.getElementById('display-mode-label-mobile');
+            if (toggle) toggle.checked = enabled;
+            if (deskLabel) deskLabel.style.opacity = enabled ? '0.4' : '1';
+            if (mobLabel) mobLabel.style.opacity = enabled ? '1' : '0.4';
+        }
+
+        // Determine initial mode: check saved pref first, else auto-detect
+        (function initDisplayMode() {
+            var saved = localStorage.getItem('solus_displayMode'); // 'mobile', 'desktop', or null
+            if (saved === 'mobile') {
+                setMobileMode(true, false);
+            } else if (saved === 'desktop') {
+                setMobileMode(false, false);
+            } else {
+                // Auto
+                var autoMobile = detectIsMobile();
+                setMobileMode(autoMobile, true);
+            }
+        })();
+
+        // Settings toggle handler
+        var displayModeToggle = document.getElementById('display-mode-toggle');
+        if (displayModeToggle) {
+            displayModeToggle.onchange = function() {
+                var wantMobile = this.checked;
+                localStorage.setItem('solus_displayMode', wantMobile ? 'mobile' : 'desktop');
+                setMobileMode(wantMobile, false);
+            };
+        }
+
+        // Re-check landscape/tiny classes on orientation change
+        window.addEventListener('orientationchange', function() {
+            setTimeout(function() {
+                if (document.body.classList.contains('mobile-mode')) {
+                    updateLandscapeClass();
+                }
+            }, 150); // small delay for orientation to settle
+        });
+
+        window.addEventListener('resize', function() {
+            if (document.body.classList.contains('mobile-mode')) {
+                updateLandscapeClass();
+            }
+        });
+
+        // --- Stats helpers ---
+        function timeAgo(ts) {
+            const diff = Date.now() - ts;
+            const mins = Math.floor(diff / 60000);
+            if (mins < 2) return 'Just now';
+            if (mins < 60) return `${mins} minutes ago`;
+            const hours = Math.floor(mins / 60);
+            if (hours < 24) return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+            const days = Math.floor(hours / 24);
+            if (days < 30) return days === 1 ? '1 day ago' : `${days} days ago`;
+            const months = Math.floor(days / 30);
+            if (months < 12) return months === 1 ? '1 month ago' : `${months} months ago`;
+            const years = Math.floor(months / 12);
+            return years === 1 ? '1 year ago' : `${years} years ago`;
+        }
+
+        function formatPlaytime(minutes) {
+            if (!minutes || minutes < 1) return '< 1m';
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            if (h === 0) return `${m}m`;
+            if (m === 0) return `${h}h`;
+            return `${h}h ${m}m`;
+        }
+
+        function getStatsEntries() {
+            const entries = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('solus_stats_')) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        if (data && data.lastPlayed) entries.push(data);
+                    } catch(e) {}
+                }
+            }
+            entries.sort((a, b) => b.lastPlayed - a.lastPlayed);
+            return entries;
+        }
+
+        function countCustomGames() {
+            let count = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('solus_stats_custom_')) count++;
+            }
+            // Also count from the DB cache
+            return Math.max(count, allCustomGames.length);
+        }
+
+        function renderStats() {
+            const container = document.getElementById('stats-page-content');
+            const entries = getStatsEntries();
+            const totalLaunched = entries.length;
+            const totalMinutesAll = entries.reduce((sum, e) => sum + (e.totalMinutes || 0), 0);
+
+            // Count custom games from DB
+            getAllGames().then(customGames => {
+                const customCount = customGames.length;
+
+                let summaryHTML = `
+                <div class="stats-summary">
+                    <div class="stats-card">
+                        <div class="stats-label">Custom Games Added</div>
+                        <div class="stats-value">${customCount}</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-label">Games Launched</div>
+                        <div class="stats-value">${totalLaunched}</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-label">Total Playtime</div>
+                        <div class="stats-value" style="font-size:1.4rem; padding-top:4px;">${formatPlaytime(totalMinutesAll)}</div>
+                    </div>
+                </div>`;
+
+                let tableHTML = `
+                <div class="stats-table-wrap">
+                    <div class="stats-table-title">Launch History</div>`;
+
+                if (entries.length === 0) {
+                    tableHTML += `<div class="stats-empty">No games launched yet, head to the Library to play something!</div>`;
+                } else {
+                    tableHTML += `
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Game</th>
+                                <th>Last Launched</th>
+                                <th>Total Playtime</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                    entries.forEach(e => {
+                        tableHTML += `
+                            <tr>
+                                <td>${e.name || 'Unknown'}</td>
+                                <td>${timeAgo(e.lastPlayed)}</td>
+                                <td>${formatPlaytime(e.totalMinutes || 0)}</td>
+                            </tr>`;
+                    });
+                    tableHTML += `</tbody></table>`;
+                }
+                tableHTML += `</div>`;
+
+                container.innerHTML = summaryHTML + tableHTML;
+            }).catch(() => {
+                container.innerHTML = `<div class="stats-empty">Could not load stats.</div>`;
+            });
+        }
+
+        function applyTheme(theme) {
+            document.body.classList.remove('light-theme', 'glass-theme');
+            if (theme === 'light') document.body.classList.add('light-theme');
+            else if (theme === 'glass') document.body.classList.add('glass-theme');
+            themeSelect.value = theme;
+        }
+
+        themeSelect.onchange = function() {
+            applyTheme(this.value);
+            localStorage.setItem('solus_theme', this.value);
+        };
+
+        // Sync "About" page version details with current theme       
+        const addGameForm = document.getElementById('add-game-form');
+        const gameNameInput = document.getElementById('game-name');
+        const coverUrlInput = document.getElementById('cover-url');
+        const coverFileInput = document.getElementById('cover-file');
+        const htmlCodeInput = document.getElementById('html-code');
+        const htmlFileInput = document.getElementById('html-file');
+        const statusMessage = document.getElementById('game-status-message');
+
+        const imageUrlGroup = document.getElementById('image-url-group');
+        const imageFileGroup = document.getElementById('image-file-group');
+        const htmlPasteGroup = document.getElementById('html-paste-group');
+        const htmlFileGroup = document.getElementById('html-file-group');
+       
+        function setupFormOptions(name, optionGroups) {
+            document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+                radio.closest('.upload-option').onclick = () => {
+                    radio.closest('.game-upload-options').querySelectorAll('.upload-option').forEach(o => {
+                        o.classList.remove('active-option');
+                    });
+                    radio.closest('.upload-option').classList.add('active-option');
+                    radio.checked = true;
+                    for (const [key, element] of Object.entries(optionGroups)) {
+                        element.classList.toggle('hidden', !key.includes(radio.value));
+                    }
+                };
+            });
+        }
+
+        setupFormOptions('cover-source', { 'url': imageUrlGroup, 'file': imageFileGroup });
+        setupFormOptions('html-source', { 'paste': htmlPasteGroup, 'file': htmlFileGroup });
+       
+        addGameForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const name = gameNameInput.value.trim();
+            if (!name) return alert('Name required');
+           
+            let coverData = '';
+            const coverSource = document.querySelector('input[name="cover-source"]:checked').value;
+            if (coverSource === 'url') coverData = coverUrlInput.value.trim();
+            else if (coverFileInput.files[0]) coverData = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(coverFileInput.files[0]); });
+
+            let htmlContent = '';
+            const htmlSource = document.querySelector('input[name="html-source"]:checked').value;
+            if (htmlSource === 'paste') htmlContent = htmlCodeInput.value.trim();
+            else if (htmlFileInput.files[0]) htmlContent = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsText(htmlFileInput.files[0]); });
+
+            if (!htmlContent) return alert('HTML required');
+           
+            await saveGame({ name, cover: coverData, htmlContent, timestamp: Date.now() });
+            addGameForm.reset();
+            showPage('library');
+        };
+
+        const tabNameInput = document.getElementById('tab-name-input');
+        const faviconUrlInput = document.getElementById('favicon-url-input');
+        const favIconPng = document.getElementById('favicon-png');
+        const favIconIco = document.getElementById('favicon-ico');
+
+        function restoreSettingsUI() {
+            const _tabInput = document.getElementById('tab-name-input');
+            const _favInput = document.getElementById('favicon-url-input');
+            const _favPng = document.getElementById('favicon-png');
+            const _favIco = document.getElementById('favicon-ico');
+            const savedTab = localStorage.getItem('solus_tabName');
+            const savedFav = localStorage.getItem('solus_favicon');
+            const savedInvis = localStorage.getItem('solus_invis') === 'true';
+            const savedReflection = localStorage.getItem('solus_reflection') === 'true';
+            const savedPanicEnabled = localStorage.getItem('solus_panicEnabled') === 'true';
+            const savedPanicMode = localStorage.getItem('solus_panicMode') || 'redirect';
+            const savedPanicUrl = localStorage.getItem('solus_panicUrl') || '';
+            if (savedTab && _tabInput) { _tabInput.value = savedTab; document.title = savedTab; }
+            if (savedFav && _favInput) { _favInput.value = savedFav; if (_favPng) _favPng.href = savedFav; if (_favIco) _favIco.href = savedFav; }
+            const invisEl = document.getElementById('invisibility-cloak-toggle');
+            const reflectEl = document.getElementById('reflection-cloak-toggle');
+            const panicToggleEl = document.getElementById('panic-key-toggle');
+            const panicGroupEl = document.getElementById('panic-settings-group');
+            const panicModeEl = document.getElementById('panic-mode-select');
+            const panicRedirectEl = document.getElementById('panic-redirect-setting');
+            const panicBgEl = document.getElementById('panic-background-setting');
+            const panicUrlEl = document.getElementById('panic-url-input');
+            const panicBgUrlEl = document.getElementById('panic-background-url');
+            if (invisEl) invisEl.checked = savedInvis;
+            if (reflectEl) reflectEl.checked = savedReflection;
+            document.body.classList.toggle('reflection-active', savedReflection);
+            if (panicToggleEl) panicToggleEl.checked = savedPanicEnabled;
+            if (panicGroupEl) panicGroupEl.style.display = savedPanicEnabled ? 'flex' : 'none';
+            if (panicModeEl) panicModeEl.value = savedPanicMode;
+            if (savedPanicMode !== 'redirect') {
+                if (panicRedirectEl) panicRedirectEl.style.display = 'none';
+                if (panicBgEl) panicBgEl.style.display = 'flex';
+            }
+            if (savedPanicUrl) { if (panicUrlEl) panicUrlEl.value = savedPanicUrl; if (panicBgUrlEl) panicBgUrlEl.value = savedPanicUrl; }
+            const savedTheme = localStorage.getItem('solus_theme');
+            if (savedTheme) applyTheme(savedTheme);
+        }
+
+        // Restore saved settings on load
+        (function restoreSettings() {
+            const savedTab = localStorage.getItem('solus_tabName');
+            const savedFav = localStorage.getItem('solus_favicon');
+            const savedInvis = localStorage.getItem('solus_invis') === 'true';
+            const savedReflection = localStorage.getItem('solus_reflection') === 'true';
+            const savedPanicEnabled = localStorage.getItem('solus_panicEnabled') === 'true';
+            const savedPanicMode = localStorage.getItem('solus_panicMode') || 'redirect';
+            const savedPanicUrl = localStorage.getItem('solus_panicUrl') || '';
+
+            if (savedTab) { tabNameInput.value = savedTab; document.title = savedTab; }
+            if (savedFav) { faviconUrlInput.value = savedFav; favIconPng.href = favIconIco.href = savedFav; }
+            if (savedInvis) { document.getElementById('invisibility-cloak-toggle').checked = true; }
+            if (savedReflection) { document.getElementById('reflection-cloak-toggle').checked = true; document.body.classList.add('reflection-active'); }
+            if (savedPanicEnabled) {
+                document.getElementById('panic-key-toggle').checked = true;
+                document.getElementById('panic-settings-group').style.display = 'flex';
+            }
+            if (savedPanicMode !== 'redirect') {
+                document.getElementById('panic-mode-select').value = savedPanicMode;
+                document.getElementById('panic-redirect-setting').style.display = 'none';
+                document.getElementById('panic-background-setting').style.display = 'flex';
+            }
+            if (savedPanicUrl) {
+                document.getElementById('panic-url-input').value = savedPanicUrl;
+                document.getElementById('panic-background-url').value = savedPanicUrl;
+            }
+            const savedTheme = localStorage.getItem('solus_theme');
+            if (savedTheme) applyTheme(savedTheme);
+        })();
+
+        tabNameInput.oninput = (e) => {
+            const val = e.target.value.trim() || "Solus MS - Game Launcher";
+            document.title = val;
+            localStorage.setItem('solus_tabName', val);
+        };
+        faviconUrlInput.oninput = (e) => {
+            const url = e.target.value.trim() || "favicon.ico";
+            favIconPng.href = favIconIco.href = url;
+            localStorage.setItem('solus_favicon', url);
+        };
+       
+        // Invisibility Cloak Implementation
+        let invisibilityEnabled = false;
+        let originalTitle = document.title;
+        let originalFavicon = favIconPng.href;
+       
+        const invisibilityToggle = document.getElementById('invisibility-cloak-toggle');
+       
+        function handleInvisibility() {
+            if (!invisibilityEnabled) return;
+           
+            if (document.hidden) {
+                document.title = '\u3164';
+                favIconPng.href = favIconIco.href = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            } else {
+                document.title = originalTitle;
+                favIconPng.href = favIconIco.href = originalFavicon;
+            }
+        }
+       
+        invisibilityToggle.onchange = function() {
+            invisibilityEnabled = this.checked;
+            localStorage.setItem('solus_invis', this.checked);
+           
+            if (invisibilityEnabled) {
+                originalTitle = document.title;
+                originalFavicon = favIconPng.href;
+                document.addEventListener('visibilitychange', handleInvisibility);
+                if (document.hidden) {
+                    handleInvisibility();
+                }
+            } else {
+                document.removeEventListener('visibilitychange', handleInvisibility);
+                document.title = originalTitle;
+                favIconPng.href = favIconIco.href = originalFavicon;
+            }
+        };
+       
+        tabNameInput.addEventListener('input', () => {
+            originalTitle = tabNameInput.value.trim() || "Solus MS - Game Launcher";
+        });
+       
+        faviconUrlInput.addEventListener('input', () => {
+            originalFavicon = faviconUrlInput.value.trim() || "favicon.ico";
+        });
+       
+        const reflectionToggle = document.getElementById('reflection-cloak-toggle');
+        reflectionToggle.onchange = () => {
+            document.body.classList.toggle('reflection-active', reflectionToggle.checked);
+            localStorage.setItem('solus_reflection', reflectionToggle.checked);
+        };
+       
+        const gameOverlayToggle = document.getElementById('game-overlay-toggle');
+        gameOverlayToggle.onchange = function() {
+            gameOverlayEnabled = this.checked;
+        };
+       
+        // Panic Key Implementation
+        let panicKeyEnabled = false;
+        let panicMode = 'redirect';
+        let panicUrl = 'https://classroom.google.com';
+        let backgroundTab = null;
+       
+        const panicKeyToggle = document.getElementById('panic-key-toggle');
+        const panicSettingsGroup = document.getElementById('panic-settings-group');
+        const panicModeSelect = document.getElementById('panic-mode-select');
+        const panicRedirectSetting = document.getElementById('panic-redirect-setting');
+        const panicBackgroundSetting = document.getElementById('panic-background-setting');
+        const panicUrlInput = document.getElementById('panic-url-input');
+        const panicBackgroundUrl = document.getElementById('panic-background-url');
+        const openBackgroundTabBtn = document.getElementById('open-background-tab');
+       
+        panicKeyToggle.onchange = function() {
+            panicKeyEnabled = this.checked;
+            panicSettingsGroup.style.display = this.checked ? 'flex' : 'none';
+            localStorage.setItem('solus_panicEnabled', this.checked);
+        };
+       
+        panicModeSelect.onchange = function() {
+            panicMode = this.value;
+            localStorage.setItem('solus_panicMode', panicMode);
+            if (panicMode === 'redirect') {
+                panicRedirectSetting.style.display = 'flex';
+                panicBackgroundSetting.style.display = 'none';
+            } else {
+                panicRedirectSetting.style.display = 'none';
+                panicBackgroundSetting.style.display = 'flex';
+            }
+        };
+       
+        panicUrlInput.oninput = function() {
+            panicUrl = this.value.trim() || 'https://classroom.google.com';
+            localStorage.setItem('solus_panicUrl', panicUrl);
+        };
+       
+        panicBackgroundUrl.oninput = function() {
+            panicUrl = this.value.trim() || 'https://classroom.google.com';
+            localStorage.setItem('solus_panicUrl', panicUrl);
+        };
+       
+        openBackgroundTabBtn.onclick = function() {
+            const url = panicBackgroundUrl.value.trim() || 'https://classroom.google.com';
+           
+            backgroundTab = window.open(url, '_blank');
+           
+            if (backgroundTab) {
+                window.focus();
+                openBackgroundTabBtn.textContent = 'Tab Ready ✓';
+                openBackgroundTabBtn.style.background = '#28a745';
+            } else {
+                openBackgroundTabBtn.textContent = 'Pop-up Blocked!';
+                openBackgroundTabBtn.style.background = '#dc3545';
+                setTimeout(() => {
+                    openBackgroundTabBtn.textContent = 'Open Background Tab';
+                    openBackgroundTabBtn.style.background = '';
+                }, 2000);
+            }
+        };
+       
+        document.addEventListener('keydown', (e) => {
+            if (panicKeyEnabled && e.key === 'Escape') {
+                e.preventDefault();
+               
+                if (panicMode === 'redirect') {
+                    window.location.href = panicUrl;
+                } else if (panicMode === 'background') {
+                    if (backgroundTab) {
+                        try {
+                            backgroundTab.focus();
+                        } catch(e) {}
+                    }
+                    window.close();
+                }
+            }
+        });
+       
+        // about:blank Cloaking
+        const aboutBlankBtn = document.getElementById('aboutblank-btn');
+        aboutBlankBtn.onclick = function() {
+            const win = window.open();
+            if (!win) {
+                alert('Pop-ups are blocked by your browser. Please allow pop-ups for this site to use this feature.');
+                return;
+            }
+            win.document.body.style.margin = '0';
+            win.document.body.style.height = '100vh';
+            const iframe = win.document.createElement('iframe');
+            iframe.style.border = 'none';
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.margin = '0';
+            iframe.src = 'https://katsugachi.github.io/Solus-MS/';
+            win.document.body.appendChild(iframe);
+            window.location.replace('https://www.google.com');
+        };
+
+        // =====================================================
+        // LIBRARY EXPORT / IMPORT
+        // Dumps all localStorage AND all IndexedDB databases
+        // on this origin — works on any domain/port.
+        // =====================================================
+
+        // Binary serialization — JSON can't handle ArrayBuffer/Blob/TypedArray
+        function valueToSerializable(val) {
+            if (val instanceof ArrayBuffer) {
+                return { __type: 'ArrayBuffer', data: bufToB64(val) };
+            }
+            if (val instanceof Blob) {
+                // Blobs can't be read synchronously — mark for async handling
+                // We handle them via getAllKeys/getAll which returns them, but
+                // JSON.stringify will drop them. Convert to ArrayBuffer first via FileReader.
+                return { __type: 'Blob', data: null, size: val.size, blobType: val.type };
+            }
+            if (ArrayBuffer.isView(val)) {
+                return { __type: val.constructor.name, data: bufToB64(val.buffer) };
+            }
+            if (Array.isArray(val)) return val.map(valueToSerializable);
+            if (val && typeof val === 'object') {
+                const out = {};
+                for (const k of Object.keys(val)) out[k] = valueToSerializable(val[k]);
+                return out;
+            }
+            return val;
+        }
+
+        function valueFromSerializable(val) {
+            if (val && val.__type === 'ArrayBuffer') return b64ToBuf(val.data);
+            if (val && val.__type === 'Blob') return new Blob([], { type: val.blobType || '' }); // best effort
+            if (val && val.__type) {
+                const buf = b64ToBuf(val.data);
+                const TypedArray = self[val.__type];
+                return TypedArray ? new TypedArray(buf) : buf;
+            }
+            if (Array.isArray(val)) return val.map(valueFromSerializable);
+            if (val && typeof val === 'object') {
+                const out = {};
+                for (const k of Object.keys(val)) out[k] = valueFromSerializable(val[k]);
+                return out;
+            }
+            return val;
+        }
+
+        function bufToB64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let bin = '';
+            for (let i = 0; i < bytes.byteLength; i++) bin += String.fromCharCode(bytes[i]);
+            return btoa(bin);
+        }
+
+        function b64ToBuf(b64) {
+            const bin = atob(b64);
+            const buf = new ArrayBuffer(bin.length);
+            const bytes = new Uint8Array(buf);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            return buf;
+        }
+
+        // Dump all records from a single store, handling Blobs asynchronously
+        async function dumpStore(store) {
+            return new Promise((resolve) => {
+                const keysReq = store.getAllKeys();
+                const valsReq = store.getAll();
+                let keys = null, vals = null;
+                const tryFinish = async () => {
+                    if (keys === null || vals === null) return;
+                    // Convert any Blobs to ArrayBuffer before serializing
+                    const converted = await Promise.all(vals.map(v => blobsToBuffers(v)));
+                    resolve(keys.map((k, i) => ({ key: k, value: valueToSerializable(converted[i]) })));
+                };
+                keysReq.onsuccess = () => { keys = keysReq.result; tryFinish(); };
+                valsReq.onsuccess = () => { vals = valsReq.result; tryFinish(); };
+                keysReq.onerror = () => { keys = []; tryFinish(); };
+                valsReq.onerror = () => { vals = []; tryFinish(); };
+            });
+        }
+
+        async function blobsToBuffers(val) {
+            if (val instanceof Blob) return val.arrayBuffer();
+            if (Array.isArray(val)) return Promise.all(val.map(blobsToBuffers));
+            if (val && typeof val === 'object' && !(val instanceof ArrayBuffer) && !ArrayBuffer.isView(val)) {
+                const out = {};
+                for (const k of Object.keys(val)) out[k] = await blobsToBuffers(val[k]);
+                return out;
+            }
+            return val;
+        }
+
+        async function dumpAllIndexedDB() {
+            const result = {};
+            let dbList = [];
+            try {
+                dbList = indexedDB.databases ? await indexedDB.databases() : [{ name: 'SolusGamesDB', version: 1 }];
+            } catch(e) { dbList = [{ name: 'SolusGamesDB', version: 1 }]; }
+
+            for (const { name, version } of dbList) {
+                if (!name || !version) continue;
+                try {
+                    result[name] = await new Promise((resolve) => {
+                        const req = indexedDB.open(name, version);
+                        req.onerror = () => resolve({});
+                        req.onblocked = () => resolve({});
+                        req.onupgradeneeded = () => resolve({});
+                        req.onsuccess = async () => {
+                            const db = req.result;
+                            const storeNames = Array.from(db.objectStoreNames);
+                            if (!storeNames.length) { db.close(); resolve({}); return; }
+                            const dbDump = {};
+                            for (const storeName of storeNames) {
+                                try {
+                                    const tx = db.transaction(storeName, 'readonly');
+                                    dbDump[storeName] = await dumpStore(tx.objectStore(storeName));
+                                } catch(e) { dbDump[storeName] = []; }
+                            }
+                            db.close();
+                            resolve(dbDump);
+                        };
+                    });
+                } catch(e) { result[name] = {}; }
+            }
+            return result;
+        }
+
+        async function restoreAllIndexedDB(idbDump) {
+            for (const [dbName, dbData] of Object.entries(idbDump)) {
+                const storeNames = Object.keys(dbData);
+                if (!storeNames.length) continue;
+                try {
+                    await new Promise((resolve) => {
+                        const req = indexedDB.open(dbName);
+                        req.onerror = () => resolve();
+                        req.onblocked = () => resolve();
+                        req.onupgradeneeded = () => resolve();
+                        req.onsuccess = () => {
+                            const db = req.result;
+                            const existingStores = Array.from(db.objectStoreNames);
+                            const toRestore = storeNames.filter(s => existingStores.includes(s));
+                            if (!toRestore.length) { db.close(); resolve(); return; }
+                            let remaining = toRestore.length;
+                            const checkDone = () => { if (--remaining === 0) { db.close(); resolve(); } };
+                            for (const storeName of toRestore) {
+                                try {
+                                    const tx = db.transaction(storeName, 'readwrite');
+                                    tx.onerror = tx.onabort = () => checkDone();
+                                    const store = tx.objectStore(storeName);
+                                    const records = dbData[storeName] || [];
+                                    let i = 0;
+                                    const putNext = () => {
+                                        if (i >= records.length) { checkDone(); return; }
+                                        const r = records[i++];
+                                        try {
+                                            const val = valueFromSerializable(r.value);
+                                            const r2 = store.keyPath ? store.put(val) : store.put(val, r.key);
+                                            r2.onsuccess = r2.onerror = putNext;
+                                        } catch(e) { putNext(); }
+                                    };
+                                    putNext();
+                                } catch(e) { checkDone(); }
+                            }
+                        };
+                    });
+                } catch(e) {}
+            }
+        }
+
+        async function exportLibrary() {
+            const btn = document.getElementById('export-library-btn');
+            btn.textContent = 'Exporting…';
+            btn.disabled = true;
+            try {
+                const localStorageData = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    localStorageData[key] = localStorage.getItem(key);
+                }
+
+                const idbData = await dumpAllIndexedDB();
+
+                const payload = {
+                    version: '4.0.0',
+                    exportedAt: new Date().toISOString(),
+                    localStorageData,
+                    idbData
+                };
+
+                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `solus-backup-${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+
+                btn.textContent = 'Exported ✓';
+                btn.style.background = '#28a745';
+                setTimeout(() => { btn.textContent = 'Export Backup'; btn.style.background = ''; btn.disabled = false; }, 2000);
+            } catch(err) {
+                console.error('Export failed:', err);
+                btn.textContent = 'Export Failed';
+                btn.style.background = '#dc3545';
+                setTimeout(() => { btn.textContent = 'Export Backup'; btn.style.background = ''; btn.disabled = false; }, 2500);
+            }
+        }
+
+        async function importLibrary(file) {
+            const status = document.getElementById('import-library-status');
+            const btn = document.getElementById('import-library-btn');
+            btn.disabled = true;
+            status.textContent = 'Reading file…';
+            try {
+                const text = await file.text();
+                const payload = JSON.parse(text);
+                if (!payload || typeof payload !== 'object') throw new Error('Invalid backup file.');
+
+                // Restore localStorage
+                if (payload.localStorageData && typeof payload.localStorageData === 'object') {
+                    for (const [key, val] of Object.entries(payload.localStorageData)) {
+                        if (key === 'solus_displayMode') continue;
+                        localStorage.setItem(key, val);
+                    }
+                }
+
+                // Restore all IndexedDB (covers Solus games DB + any game save DBs)
+                if (payload.idbData && typeof payload.idbData === 'object') {
+                    status.textContent = 'Restoring saves…';
+                    await restoreAllIndexedDB(payload.idbData);
+                }
+
+                // Legacy v3 backup support: games array
+                if (Array.isArray(payload.games)) {
+                    const existing = await getAllGames();
+                    const existingNames = new Set(existing.map(g => g.name.toLowerCase()));
+                    for (const game of payload.games) {
+                        const { id: _id, ...gameData } = game;
+                        if (!existingNames.has(gameData.name.toLowerCase())) {
+                            await saveGame({ ...gameData, timestamp: gameData.timestamp || Date.now() });
+                        }
+                    }
+                }
+
+                restoreSettingsUI();
+                loadGames();
+                status.textContent = 'Restore complete ✓';
+                btn.style.background = '#28a745';
+                setTimeout(() => { status.textContent = ''; btn.style.background = ''; btn.disabled = false; }, 3000);
+            } catch(err) {
+                console.error('Import failed:', err);
+                status.textContent = 'Import failed: ' + (err.message || 'Unknown error');
+                btn.style.background = '#dc3545';
+                setTimeout(() => { status.textContent = ''; btn.style.background = ''; btn.disabled = false; }, 3000);
+            }
+            document.getElementById('import-library-file').value = '';
+        }
+
+        document.getElementById('export-library-btn').addEventListener('click', exportLibrary);
+
+        document.getElementById('import-library-btn').addEventListener('click', () => {
+            document.getElementById('import-library-file').click();
+        });
+
+        document.getElementById('import-library-file').addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                importLibrary(e.target.files[0]);
+            }
+        });
+        (async function initialize() {
+            try {
+                await initDB();
+            } catch (e) {
+                console.error("DB Initialization failed:", e);
+            }
+            showPage('library');
+        })();
+    </script>
+
+<!-- Paste right before </body> -->
+
+<style>
+  #solus-notice-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    animation: overlayIn 0.3s ease;
+  }
+
+  @keyframes overlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  #solus-notice-box {
+    background: var(--bg-medium, #28384d);
+    border: 1px solid var(--border-color, #384e68);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.04);
+    padding: 32px 36px;
+    max-width: 480px;
+    width: calc(100% - 40px);
+    animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.88) translateY(16px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  #solus-notice-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 123, 255, 0.15);
+    border: 1px solid rgba(0, 123, 255, 0.35);
+    color: var(--accent-blue, #007bff);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+
+  #solus-notice-badge::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-blue, #007bff);
+    animation: pulse 1.6s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  #solus-notice-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-light, #e0e6ed);
+    margin-bottom: 14px;
+    line-height: 1.3;
+  }
+
+  #solus-notice-body {
+    font-size: 0.95rem;
+    color: rgba(224, 230, 237, 0.8);
+    line-height: 1.65;
+    margin-bottom: 28px;
+  }
+
+  #solus-notice-body strong {
+    color: var(--text-light, #e0e6ed);
+  }
+
+  #solus-notice-divider {
+    height: 1px;
+    background: var(--border-color, #384e68);
+    margin: 0 -36px 24px;
+  }
+
+  #solus-notice-close {
+    display: block;
+    width: 100%;
+    padding: 11px;
+    background: var(--accent-blue, #007bff);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    letter-spacing: 0.3px;
+  }
+
+  #solus-notice-close:hover {
+    background: var(--accent-hover, #0060c0);
+    box-shadow: 0 0 14px rgba(0, 123, 255, 0.5);
+  }
+
+  #solus-notice-close:active {
+    transform: scale(0.98);
+  }
+
+  .glass-theme #solus-notice-box {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.05);
+  }
+
+  .light-theme #solus-notice-box {
+    background: #ffffff;
+    border-color: #cccccc;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  }
+
+  .light-theme #solus-notice-body {
+    color: #555;
+  }
+
+  .light-theme #solus-notice-divider {
+    background: #e0e0e0;
+  }
+</style>
+
+<div id="solus-notice-overlay">
+  <div id="solus-notice-box" role="dialog" aria-modal="true">
+    <div id="solus-notice-badge">Update Notice</div>
+    <div id="solus-notice-title">Deltarune Chapter 5 & Among Us</div>
+    <div id="solus-notice-divider"></div>
+    <div id="solus-notice-body">
+      <strong>Deltarune Chapter 5</strong> and <strong>Among Us</strong> have been added and save progress is retained. Deltarune also now supports importing saves from the EXE version. <br><br>Happy Gaming!
+    </div>
+    <button id="solus-notice-close">Thanks, Got It!</button>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const KEY = 'solus_deltarune_notice_v1';
+    if (localStorage.getItem(KEY)) return;
+    const overlay = document.getElementById('solus-notice-overlay');
+    overlay.style.display = 'flex';
+    document.getElementById('solus-notice-close').onclick = function() {
+      overlay.style.animation = 'overlayIn 0.2s ease reverse forwards';
+      document.getElementById('solus-notice-box').style.animation = 'popIn 0.2s ease reverse forwards';
+      setTimeout(() => overlay.remove(), 220);
+      localStorage.setItem(KEY, '1');
+    };
+  })();
+</script>
+</body>
+</html>
