@@ -437,6 +437,49 @@
         .setting-item:first-child {
             border-top: none;
         }
+
+        /* --- Tab Cloak Quick Presets --- */
+        .cloak-presets {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .cloak-preset {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: bold;
+            transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+        }
+
+        .cloak-preset img {
+            display: block;
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+            border-radius: 3px;
+        }
+
+        .cloak-preset:hover {
+            border-color: var(--accent-blue);
+            background-color: rgba(0, 123, 255, 0.12);
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.35);
+        }
+
+        .cloak-preset.cloak-preset-active {
+            border-color: var(--accent-blue);
+            background-color: rgba(0, 123, 255, 0.16);
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+        }
         /* Fix for About Page links to match text color */
 
         .about-content a {
@@ -614,7 +657,7 @@
         }
 
         /* ===================================================
-           MOBILE MODE — activated by JS adding .mobile-mode
+           MOBILE MODE, activated by JS adding .mobile-mode
            to <body>. Desktop is default, unchanged.
            All mobile styles are scoped to body.mobile-mode.
            =================================================== */
@@ -745,6 +788,18 @@
         body.mobile-mode #panic-background-setting {
             flex-direction: column;
             align-items: flex-start;
+        }
+
+        /* Preset chips: full width row, thumb friendly tap targets */
+        body.mobile-mode .cloak-presets {
+            justify-content: flex-start;
+            width: 100%;
+        }
+
+        body.mobile-mode .cloak-preset {
+            flex: 1;
+            justify-content: center;
+            padding: 12px 10px;
         }
 
         body.mobile-mode #open-background-tab {
@@ -982,7 +1037,7 @@
             <form id="add-game-form" class="settings-group">
                 <div class="form-group">
                     <label for="game-name">Game Name</label>
-                    <input type="text" id="game-name" class="text-input" placeholder="e.g., Ori And The Blind Forest">
+                    <input type="text" id="game-name" class="text-input" maxlength="60" placeholder="e.g., Ori And The Blind Forest">
                 </div>
                
                 <h3>Cover Art Source (Optional)</h3>
@@ -1035,8 +1090,11 @@
                
                 <button type="submit" class="launch-btn" style="margin-top: 20px;">Save Game to Library</button>
             </form>
-           
+
             <p id="game-status-message" style="margin-top: 20px; text-align: center;"></p>
+            <p style="margin-top: 8px; text-align: center; font-size: 0.85rem; opacity: 0.65;">
+                Imported games run with access to this app's data on this device. Only add games from sources you trust.
+            </p>
         </div>
        
         <div id="settings-page" style="display: none;">
@@ -1054,7 +1112,20 @@
                     <span>Tab Logo Cloak URL (Change Tab Display Logo)</span>
                     <div style="text-align: right;">
                         <input type="text" id="favicon-url-input" class="text-input" placeholder="https://google.com/favicon.ico" style="width: 250px;">
-                        <br><a href="https://katsugachi.github.io/Favicon-Yoinker/" target="_blank" style="color: var(--accent-blue); font-size: 0.85rem; text-decoration: none;">Tab Cloak Logo Fetcher</a>
+                        <br><a href="https://katsugachi.github.io/Favicon-Yoinker/" target="_blank" rel="noopener noreferrer" style="color: var(--accent-blue); font-size: 0.85rem; text-decoration: none;">Tab Cloak Logo Fetcher</a>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span>Quick Presets</span>
+                    <div class="cloak-presets">
+                        <button type="button" class="cloak-preset" data-tab-name="Google" data-favicon="https://www.google.com/favicon.ico">
+                            <img src="https://www.google.com/favicon.ico" alt="" width="16" height="16" onerror="this.style.display='none'">
+                            Google
+                        </button>
+                        <button type="button" class="cloak-preset" data-tab-name="Sentral" data-favicon="https://www.google.com/s2/favicons?domain=sentral.com.au&amp;sz=128">
+                            <img src="https://www.google.com/s2/favicons?domain=sentral.com.au&amp;sz=128" alt="" width="16" height="16" onerror="this.style.display='none'">
+                            Sentral
+                        </button>
                     </div>
                 </div>
                 <div class="setting-item">
@@ -1104,10 +1175,6 @@
 
             <div class="settings-group">
                 <h3>Launch Options</h3>
-                <div class="setting-item">
-                    <span>Default Game Directory</span>
-                    <input type="text" class="text-input" value="C:/SolusMS/games/" style="width: 300px;">
-                </div>
                 <div class="setting-item">
                     <span>Enable Game Overlay</span>
                     <label class="switch">
@@ -1204,7 +1271,7 @@
                     </div>
                      <div class="setting-item">
                         <span>Secret Game</span>
-                        <a href=https://coffee-tea-and-games.github.io/Claude---Go-/>???</a>
+                        <a href="https://coffee-tea-and-games.github.io/Claude---Go-/">???</a>
                     </div>
                 </div>
             </div>
@@ -1228,12 +1295,15 @@
     <div id="game-overlay">
         <div id="game-overlay-bar">
             <span id="game-overlay-title">Playing...</span>
-            <button id="game-overlay-close" title="Close game">✕ Close</button>
+            <button id="game-overlay-close" title="Close game">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" width="15" height="15" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                Close
+            </button>
         </div>
-        <iframe id="game-overlay-frame" allowfullscreen allow="autoplay; fullscreen"></iframe>
+        <iframe id="game-overlay-frame" allowfullscreen allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>
     </div>
 
-    <!-- Mobile bottom nav — must be in DOM before the script runs -->
+    <!-- Mobile bottom nav, must be in DOM before the script runs -->
     <nav class="mobile-nav" id="mobile-nav" aria-label="Main navigation">
         <button class="mobile-nav-item active" id="mnav-library" aria-label="Library">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="7" height="18" rx="1"/><rect x="9.5" y="3" width="5" height="18" rx="1"/><rect x="16" y="3" width="6" height="12" rx="1"/></svg>
@@ -1348,21 +1418,55 @@
         const emptyMessage = document.getElementById('empty-library-message');
         let gameOverlayEnabled = false;
 
+        // Escape user-controlled strings before they touch innerHTML or an
+        // attribute. Game names, covers and stats come from user input and
+        // from imported backup files, so they are never trusted raw.
+        function esc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        // Panic and cloak URLs come from settings text inputs and from imported
+        // backups. Anything that is not a plain http(s) web address (including
+        // javascript:, data: and file: schemes) is rejected so the panic key can
+        // never be turned into a script launcher. Returns null when rejected.
+        function normalizeHttpUrl(v) {
+            const s = String(v == null ? '' : v).trim();
+            if (!s) return null;
+            if (/^https?:\/\//i.test(s)) return s;
+            // Bare domains like "google.com/classroom" get an https prefix
+            if (/^[a-z0-9-]+(\.[a-z0-9-]+)+([/?#].*)?$/i.test(s)) return 'https://' + s;
+            return null;
+        }
+
+        // Blob URLs for custom games: one per game id, reused across re-renders
+        // (search re-renders the grid on every keystroke; creating a fresh blob
+        // each time leaked memory until the tab died).
+        const blobUrlCache = new Map();
+        function blobUrlFor(game) {
+            if (!blobUrlCache.has(game.id)) {
+                blobUrlCache.set(game.id, URL.createObjectURL(new Blob([game.htmlContent], { type: 'text/html' })));
+            }
+            return blobUrlCache.get(game.id);
+        }
+
         function createGameCard(game, isCustom = false) {
             const card = document.createElement('div');
             card.className = 'game-card';
-            const coverStyle = game.cover ? `background-image: url('${game.cover}');` : '';
-            let launchUrl = isCustom ? URL.createObjectURL(new Blob([game.htmlContent], { type: 'text/html' })) : game.url;
+            const safeName = esc(game.name);
+            const coverStyle = game.cover ? `background-image: url('${esc(game.cover)}');` : '';
+            let launchUrl = isCustom ? blobUrlFor(game) : game.url;
 
             card.innerHTML = `
                 <div class="game-image-placeholder" style="${coverStyle}">
-                    ${game.cover ? '' : game.name}
+                    ${game.cover ? '' : safeName}
                 </div>
                 <div class="game-info">
-                    <h3>${game.name}</h3>
+                    <h3>${safeName}</h3>
                     <div class="action-group">
-                        <a href="${launchUrl}" class="launch-btn" data-game-url="${launchUrl}" target="_blank">Launch</a>
-                        ${isCustom ? `<button class="launch-btn delete-btn" data-game-id="${game.id}" style="flex-grow: 0.5;">Delete</button>` : ''}
+                        <a href="${esc(launchUrl)}" class="launch-btn" data-game-url="${esc(launchUrl)}" target="_blank" rel="noopener noreferrer">Launch</a>
+                        ${isCustom ? `<button class="launch-btn delete-btn" data-game-id="${esc(game.id)}" style="flex-grow: 0.5;">Delete</button>` : ''}
                     </div>
                 </div>
             `;
@@ -1385,43 +1489,53 @@
                 const panicEnabled = localStorage.getItem('solus_panicEnabled') === 'true';
                 const savedPanicMode = localStorage.getItem('solus_panicMode') || 'redirect';
                 const savedPanicUrl = localStorage.getItem('solus_panicUrl') || 'https://classroom.google.com';
+                // Imported backups could stash a javascript: URL here. Normalize
+                // once so both launch modes navigate somewhere harmless instead.
+                const safePanicUrl = normalizeHttpUrl(savedPanicUrl) || 'https://classroom.google.com';
+                const safeFavicon = normalizeHttpUrl(favicon)
+                    || (/^(data:image\/|blob:)/i.test(String(favicon)) ? favicon : 'favicon.ico');
 
                 // --- Game Overlay: open in same tab as a fullscreen iframe ---
                 if (gameOverlayEnabled) {
                     const overlayEl = document.getElementById('game-overlay');
                     const overlayFrame = document.getElementById('game-overlay-frame');
                     const overlayTitle = document.getElementById('game-overlay-title');
+                    const closeBtn = document.getElementById('game-overlay-close');
                     overlayTitle.textContent = game.name;
                     overlayFrame.src = launchUrl;
                     overlayEl.classList.add('active');
 
-                    // Playtime: track session start, update on close
+                    // One teardown path per session. The old version stacked a
+                    // fresh close handler on every launch, so the Nth close
+                    // wrote N stale playtime entries at once.
                     const _sessionStart = Date.now();
-                    const _closeBtn = document.getElementById('game-overlay-close');
-                    const _closeHandler = () => {
+                    let _done = false;
+                    const teardown = (recordTime) => {
+                        if (_done) return;
+                        _done = true;
+                        closeBtn.removeEventListener('click', onClose);
+                        document.removeEventListener('keydown', onOverlayPanic);
                         overlayEl.classList.remove('active');
                         overlayFrame.src = '';
-                        const elapsed = Math.round((Date.now() - _sessionStart) / 60000);
-                        const cur = JSON.parse(localStorage.getItem(statsKey) || '{}');
-                        cur.totalMinutes = (cur.totalMinutes || 0) + Math.max(0, elapsed);
-                        localStorage.setItem(statsKey, JSON.stringify(cur));
-                        _closeBtn.removeEventListener('click', _closeHandler);
+                        if (recordTime) {
+                            const elapsed = Math.round((Date.now() - _sessionStart) / 60000);
+                            try {
+                                const cur = JSON.parse(localStorage.getItem(statsKey) || '{}');
+                                cur.totalMinutes = (cur.totalMinutes || 0) + Math.max(0, elapsed);
+                                localStorage.setItem(statsKey, JSON.stringify(cur));
+                            } catch (err) {}
+                        }
                     };
-                    _closeBtn.addEventListener('click', _closeHandler);
-
-                    // Panic key still works in overlay mode
-                    if (panicEnabled) {
-                        const _panicHandler = (e) => {
-                            if (e.key === 'Escape') {
-                                e.preventDefault();
-                                overlayEl.classList.remove('active');
-                                overlayFrame.src = '';
-                                document.removeEventListener('keydown', _panicHandler);
-                                window.location.href = savedPanicUrl;
-                            }
-                        };
-                        document.addEventListener('keydown', _panicHandler);
-                    }
+                    const onClose = () => teardown(true);
+                    const onOverlayPanic = (e) => {
+                        if (e.key === 'Escape' && panicEnabled) {
+                            e.preventDefault();
+                            teardown(false);
+                            window.location.href = safePanicUrl;
+                        }
+                    };
+                    closeBtn.addEventListener('click', onClose);
+                    document.addEventListener('keydown', onOverlayPanic);
                     return;
                 }
 
@@ -1437,7 +1551,16 @@
 
                 const win = window.open('', '_blank');
                 if (!win) { window.open(launchUrl, '_blank') || (window.location.href = launchUrl); return; }
-                win.document.write(`<!DOCTYPE html><html><head><title>${tabName}</title><link rel="icon" id="tab-favicon" href="${favicon}"><style>*{margin:0;padding:0;box-sizing:border-box}body{width:100vw;height:100vh;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:none;display:block}</style></head><body><iframe src="${launchUrl}" allowfullscreen allow="autoplay; fullscreen"></iframe><script>if(typeof BroadcastChannel!=='undefined'){const _bc=new BroadcastChannel('solus_playtime');const _t=Date.now();window.addEventListener('beforeunload',()=>_bc.postMessage({statsKey:${JSON.stringify(statsKey)},elapsed:Math.round((Date.now()-_t)/60000)}));}${invisEnabled?`const _favEl=document.getElementById('tab-favicon');document.addEventListener('visibilitychange',()=>{if(document.hidden){document.title='\\u3164';_favEl.href='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';}else{document.title=${JSON.stringify(tabName)};_favEl.href=${JSON.stringify(favicon)};}});`:''}${panicEnabled?`document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();window.location.href=${JSON.stringify(savedPanicUrl)};}});`:''}<\/script></body></html>`);
+                // The launcher window is written as markup, and tabName, favicon
+                // and the panic URL are all user (or backup import) controlled.
+                // Escape for HTML, and escape "<" inside embedded JSON so nothing
+                // can close the script tag early. Favicon is resolved to an
+                // absolute URL because the written document lives at about:blank,
+                // where relative paths would break.
+                const j = (v) => JSON.stringify(v).replace(/</g, '\\u003c').replace(/\u2028|\u2029/g, '');
+                const absFavicon = safeFavicon;
+                const safePanic = safePanicUrl;
+                win.document.write(`<!DOCTYPE html><html><head><title>${esc(tabName)}</title><link rel="icon" id="tab-favicon" href="${esc(absFavicon)}"><style>*{margin:0;padding:0;box-sizing:border-box}body{width:100vw;height:100vh;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:none;display:block}</style></head><body><iframe src="${esc(launchUrl)}" allowfullscreen allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe><script>if(typeof BroadcastChannel!=='undefined'){const _bc=new BroadcastChannel('solus_playtime');const _t=Date.now();window.addEventListener('beforeunload',()=>_bc.postMessage({statsKey:${j(statsKey)},elapsed:Math.round((Date.now()-_t)/60000)}));}${invisEnabled?`const _favEl=document.getElementById('tab-favicon');document.addEventListener('visibilitychange',()=>{if(document.hidden){document.title='\\u3164';_favEl.href='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';}else{document.title=${j(tabName)};_favEl.href=${j(absFavicon)};}});`:''}${panicEnabled?`document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();window.location.href=${j(safePanic)};}});`:''}<\/script></body></html>`);
                 win.document.close();
             });
            
@@ -1454,7 +1577,7 @@
         }
 
         // --- BroadcastChannel: receive playtime when a game tab closes ---
-        // BroadcastChannel is not available in older Safari — guard it
+        // BroadcastChannel is not available in older Safari, guard it
         if (typeof BroadcastChannel !== 'undefined') {
             const _playtimeChannel = new BroadcastChannel('solus_playtime');
             _playtimeChannel.onmessage = (e) => {
@@ -1476,19 +1599,25 @@
 
             const filteredStatic = staticGames.filter(g => g.name.toLowerCase().includes(q));
             filteredStatic.forEach(game => gameLibraryGrid.appendChild(createGameCard(game, false)));
+            let total = filteredStatic.length;
 
             try {
                 allCustomGames = await getAllGames();
-                const filteredCustom = allCustomGames.filter(g => g.name.toLowerCase().includes(q));
+                // Name may not be a string if an old or hand-edited DB record
+                // says otherwise, so coerce before matching
+                const filteredCustom = allCustomGames.filter(g => String(g.name || '').toLowerCase().includes(q));
                 filteredCustom.forEach(game => gameLibraryGrid.appendChild(createGameCard(game, true)));
-                const total = filteredStatic.length + filteredCustom.length;
-                emptyMessage.classList.toggle('hidden', total > 0);
-                if (total === 0 && q) {
-                    emptyMessage.textContent = `No games match "${filterQuery}". Try a different search!`;
-                } else if (total === 0) {
-                    emptyMessage.textContent = 'Your library is empty. Add a new game using the "Add New Game" tab!';
-                }
+                total += filteredCustom.length;
             } catch (e) { console.error(e); }
+
+            // The empty state must resolve even when the database read failed,
+            // otherwise the grid just sits there blank with no explanation
+            emptyMessage.classList.toggle('hidden', total > 0);
+            if (total === 0 && q) {
+                emptyMessage.textContent = `No games match "${filterQuery}". Try a different search!`;
+            } else if (total === 0) {
+                emptyMessage.textContent = 'Your library is empty. Add a new game using the "Add New Game" tab!';
+            }
         }
 
         // Wire up search input
@@ -1508,7 +1637,6 @@
         const addGamePage = document.getElementById('add-game-page');
         const statsPage = document.getElementById('stats-page');
         const themeSelect = document.getElementById('theme-select');
-        const themeToggle = document.getElementById('theme-toggle');
         const mainHeader = document.querySelector('.header h2');
 
         // Declared here so showPage can reference it
@@ -1577,7 +1705,7 @@
             document.body.classList.toggle('tiny-screen', window.innerWidth <= 340);
         }
 
-        // Sync the mobile nav active tab indicator — handled inside showPage directly
+        // Sync the mobile nav active tab indicator, handled inside showPage directly
 
         // Wire mobile bottom nav buttons
         // Use a wrapper function to lock in pageId per iteration (avoids JS closure-over-loop bug)
@@ -1685,16 +1813,6 @@
             return entries;
         }
 
-        function countCustomGames() {
-            let count = 0;
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith('solus_stats_custom_')) count++;
-            }
-            // Also count from the DB cache
-            return Math.max(count, allCustomGames.length);
-        }
-
         function renderStats() {
             const container = document.getElementById('stats-page-content');
             const entries = getStatsEntries();
@@ -1741,7 +1859,7 @@
                     entries.forEach(e => {
                         tableHTML += `
                             <tr>
-                                <td>${e.name || 'Unknown'}</td>
+                                <td>${esc(e.name) || 'Unknown'}</td>
                                 <td>${timeAgo(e.lastPlayed)}</td>
                                 <td>${formatPlaytime(e.totalMinutes || 0)}</td>
                             </tr>`;
@@ -1760,7 +1878,7 @@
             document.body.classList.remove('light-theme', 'glass-theme');
             if (theme === 'light') document.body.classList.add('light-theme');
             else if (theme === 'glass') document.body.classList.add('glass-theme');
-            themeSelect.value = theme;
+            themeSelect.value = theme || 'dark';
         }
 
         themeSelect.onchange = function() {
@@ -1802,24 +1920,62 @@
        
         addGameForm.onsubmit = async (e) => {
             e.preventDefault();
-            const name = gameNameInput.value.trim();
-            if (!name) return alert('Name required');
-           
-            let coverData = '';
-            const coverSource = document.querySelector('input[name="cover-source"]:checked').value;
-            if (coverSource === 'url') coverData = coverUrlInput.value.trim();
-            else if (coverFileInput.files[0]) coverData = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(coverFileInput.files[0]); });
+            // Feedback now lands in #game-status-message instead of alert()
+            const setMsg = (text, color) => {
+                statusMessage.textContent = text;
+                statusMessage.style.color = color || '';
+            };
+            try {
+                const name = gameNameInput.value.trim();
+                if (!name) { setMsg('A game name is required.', '#dc3545'); return; }
+                if (name.length > 60) { setMsg('Keep the game name under 60 characters.', '#dc3545'); return; }
 
-            let htmlContent = '';
-            const htmlSource = document.querySelector('input[name="html-source"]:checked').value;
-            if (htmlSource === 'paste') htmlContent = htmlCodeInput.value.trim();
-            else if (htmlFileInput.files[0]) htmlContent = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsText(htmlFileInput.files[0]); });
+                let coverData = '';
+                const coverSource = document.querySelector('input[name="cover-source"]:checked').value;
+                if (coverSource === 'url') {
+                    coverData = coverUrlInput.value.trim();
+                } else if (coverFileInput.files[0]) {
+                    const f = coverFileInput.files[0];
+                    if (!f.type.startsWith('image/')) { setMsg('The cover must be an image file.', '#dc3545'); return; }
+                    if (f.size > 3 * 1024 * 1024) { setMsg('Cover images are limited to 3MB.', '#dc3545'); return; }
+                    coverData = await new Promise((resolve, reject) => {
+                        const fr = new FileReader();
+                        fr.onload = () => resolve(fr.result);
+                        fr.onerror = () => reject(new Error('Could not read the cover image.'));
+                        fr.readAsDataURL(f);
+                    });
+                }
 
-            if (!htmlContent) return alert('HTML required');
-           
-            await saveGame({ name, cover: coverData, htmlContent, timestamp: Date.now() });
-            addGameForm.reset();
-            showPage('library');
+                let htmlContent = '';
+                const htmlSource = document.querySelector('input[name="html-source"]:checked').value;
+                if (htmlSource === 'paste') htmlContent = htmlCodeInput.value.trim();
+                else if (htmlFileInput.files[0]) {
+                    if (htmlFileInput.files[0].size > 8 * 1024 * 1024) { setMsg('HTML files are limited to 8MB.', '#dc3545'); return; }
+                    htmlContent = await new Promise((resolve, reject) => {
+                        const fr = new FileReader();
+                        fr.onload = () => resolve(fr.result);
+                        fr.onerror = () => reject(new Error('Could not read the HTML file.'));
+                        fr.readAsText(htmlFileInput.files[0]);
+                    });
+                }
+
+                if (!htmlContent) { setMsg('Paste HTML code or upload an HTML file.', '#dc3545'); return; }
+
+                const existing = await getAllGames();
+                if (existing.some(g => String(g.name).toLowerCase() === name.toLowerCase())) {
+                    setMsg('A game with that name is already in your library.', '#dc3545');
+                    return;
+                }
+
+                await saveGame({ name, cover: coverData, htmlContent, timestamp: Date.now() });
+                addGameForm.reset();
+                setMsg(`"${name}" was saved to your library.`, '#28a745');
+                loadGames();
+                showPage('library');
+            } catch (err) {
+                console.error('Save failed:', err);
+                setMsg(err.message || 'Could not save this game.', '#dc3545');
+            }
         };
 
         const tabNameInput = document.getElementById('tab-name-input');
@@ -1827,74 +1983,71 @@
         const favIconPng = document.getElementById('favicon-png');
         const favIconIco = document.getElementById('favicon-ico');
 
-        function restoreSettingsUI() {
-            const _tabInput = document.getElementById('tab-name-input');
-            const _favInput = document.getElementById('favicon-url-input');
-            const _favPng = document.getElementById('favicon-png');
-            const _favIco = document.getElementById('favicon-ico');
+        // Single source of truth for restoring saved settings. The old code had
+        // TWO copies of this logic: one only touched form inputs and one ran
+        // before the runtime variables existed, so after any reload the cloak
+        // toggles looked "on" while invisibility, the panic key and the game
+        // overlay were all silently dead until re-toggled by hand.
+        // NOTE: this must be CALLED after the runtime variable declarations
+        // below (the initial call sits behind the panic key listeners).
+        function restoreSettings() {
             const savedTab = localStorage.getItem('solus_tabName');
             const savedFav = localStorage.getItem('solus_favicon');
             const savedInvis = localStorage.getItem('solus_invis') === 'true';
             const savedReflection = localStorage.getItem('solus_reflection') === 'true';
             const savedPanicEnabled = localStorage.getItem('solus_panicEnabled') === 'true';
-            const savedPanicMode = localStorage.getItem('solus_panicMode') || 'redirect';
-            const savedPanicUrl = localStorage.getItem('solus_panicUrl') || '';
-            if (savedTab && _tabInput) { _tabInput.value = savedTab; document.title = savedTab; }
-            if (savedFav && _favInput) { _favInput.value = savedFav; if (_favPng) _favPng.href = savedFav; if (_favIco) _favIco.href = savedFav; }
-            const invisEl = document.getElementById('invisibility-cloak-toggle');
-            const reflectEl = document.getElementById('reflection-cloak-toggle');
-            const panicToggleEl = document.getElementById('panic-key-toggle');
-            const panicGroupEl = document.getElementById('panic-settings-group');
-            const panicModeEl = document.getElementById('panic-mode-select');
-            const panicRedirectEl = document.getElementById('panic-redirect-setting');
-            const panicBgEl = document.getElementById('panic-background-setting');
-            const panicUrlEl = document.getElementById('panic-url-input');
-            const panicBgUrlEl = document.getElementById('panic-background-url');
-            if (invisEl) invisEl.checked = savedInvis;
-            if (reflectEl) reflectEl.checked = savedReflection;
-            document.body.classList.toggle('reflection-active', savedReflection);
-            if (panicToggleEl) panicToggleEl.checked = savedPanicEnabled;
-            if (panicGroupEl) panicGroupEl.style.display = savedPanicEnabled ? 'flex' : 'none';
-            if (panicModeEl) panicModeEl.value = savedPanicMode;
-            if (savedPanicMode !== 'redirect') {
-                if (panicRedirectEl) panicRedirectEl.style.display = 'none';
-                if (panicBgEl) panicBgEl.style.display = 'flex';
-            }
-            if (savedPanicUrl) { if (panicUrlEl) panicUrlEl.value = savedPanicUrl; if (panicBgUrlEl) panicBgUrlEl.value = savedPanicUrl; }
-            const savedTheme = localStorage.getItem('solus_theme');
-            if (savedTheme) applyTheme(savedTheme);
-        }
-
-        // Restore saved settings on load
-        (function restoreSettings() {
-            const savedTab = localStorage.getItem('solus_tabName');
-            const savedFav = localStorage.getItem('solus_favicon');
-            const savedInvis = localStorage.getItem('solus_invis') === 'true';
-            const savedReflection = localStorage.getItem('solus_reflection') === 'true';
-            const savedPanicEnabled = localStorage.getItem('solus_panicEnabled') === 'true';
-            const savedPanicMode = localStorage.getItem('solus_panicMode') || 'redirect';
-            const savedPanicUrl = localStorage.getItem('solus_panicUrl') || '';
+            const savedPanicMode = localStorage.getItem('solus_panicMode') === 'background' ? 'background' : 'redirect';
+            const savedPanicUrlRaw = localStorage.getItem('solus_panicUrl') || '';
+            const savedPanicUrl = normalizeHttpUrl(savedPanicUrlRaw);
 
             if (savedTab) { tabNameInput.value = savedTab; document.title = savedTab; }
-            if (savedFav) { faviconUrlInput.value = savedFav; favIconPng.href = favIconIco.href = savedFav; }
-            if (savedInvis) { document.getElementById('invisibility-cloak-toggle').checked = true; }
-            if (savedReflection) { document.getElementById('reflection-cloak-toggle').checked = true; document.body.classList.add('reflection-active'); }
-            if (savedPanicEnabled) {
-                document.getElementById('panic-key-toggle').checked = true;
-                document.getElementById('panic-settings-group').style.display = 'flex';
+            if (savedFav) {
+                faviconUrlInput.value = savedFav;
+                // Only allow http(s), data:image or relative favicon values
+                const favHref = normalizeHttpUrl(savedFav)
+                    || (/^(data:image\/|blob:|\.{0,2}\/)/i.test(savedFav.trim()) ? savedFav.trim() : '');
+                if (favHref) favIconPng.href = favIconIco.href = favHref;
             }
+            // Reflect any saved preset combination on the chip row
+            syncPresetHighlight();
+
+            // Invisibility cloak: restore the flag AND the live listener
+            invisibilityToggle.checked = savedInvis;
+            invisibilityEnabled = savedInvis;
+            // Snapshot the cloaked identity AFTER applying the saved tab name
+            originalTitle = document.title || originalTitle;
+            originalFavicon = favIconPng.href || originalFavicon;
+            if (invisibilityEnabled) {
+                document.addEventListener('visibilitychange', handleInvisibility);
+                if (document.hidden) handleInvisibility();
+            }
+
+            reflectionToggle.checked = savedReflection;
+            document.body.classList.toggle('reflection-active', savedReflection);
+
+            gameOverlayToggle.checked = localStorage.getItem('solus_overlay') === 'true';
+            gameOverlayEnabled = gameOverlayToggle.checked;
+
+            panicKeyToggle.checked = savedPanicEnabled;
+            panicKeyEnabled = savedPanicEnabled;
+            panicSettingsGroup.style.display = savedPanicEnabled ? 'flex' : 'none';
+
+            panicModeSelect.value = savedPanicMode;
+            panicMode = savedPanicMode;
             if (savedPanicMode !== 'redirect') {
-                document.getElementById('panic-mode-select').value = savedPanicMode;
-                document.getElementById('panic-redirect-setting').style.display = 'none';
-                document.getElementById('panic-background-setting').style.display = 'flex';
+                panicRedirectSetting.style.display = 'none';
+                panicBackgroundSetting.style.display = 'flex';
             }
-            if (savedPanicUrl) {
-                document.getElementById('panic-url-input').value = savedPanicUrl;
-                document.getElementById('panic-background-url').value = savedPanicUrl;
-            }
-            const savedTheme = localStorage.getItem('solus_theme');
-            if (savedTheme) applyTheme(savedTheme);
-        })();
+
+            // Show the sanitized value back to the user so the form can't hold
+            // something dangerous that looks accepted
+            const shownPanicUrl = savedPanicUrl || 'https://classroom.google.com';
+            panicUrlInput.value = shownPanicUrl;
+            panicBackgroundUrl.value = shownPanicUrl;
+            panicUrl = shownPanicUrl;
+
+            applyTheme(localStorage.getItem('solus_theme'));
+        }
 
         tabNameInput.oninput = (e) => {
             const val = e.target.value.trim() || "Solus MS - Game Launcher";
@@ -1906,6 +2059,30 @@
             favIconPng.href = favIconIco.href = url;
             localStorage.setItem('solus_favicon', url);
         };
+
+        // Tab Cloak Quick Presets: one tap fills the name and logo fields and
+        // runs the same live-apply handlers as typing, so the change also
+        // saves and unlocks the tutorial step
+        const cloakPresetBtns = Array.from(document.querySelectorAll('.cloak-preset'));
+        function syncPresetHighlight() {
+            const tab = tabNameInput.value.trim();
+            const fav = faviconUrlInput.value.trim();
+            cloakPresetBtns.forEach(btn => {
+                btn.classList.toggle('cloak-preset-active',
+                    btn.dataset.tabName === tab && btn.dataset.favicon === fav);
+            });
+        }
+        cloakPresetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabNameInput.value = btn.dataset.tabName;
+                faviconUrlInput.value = btn.dataset.favicon;
+                tabNameInput.dispatchEvent(new Event('input'));
+                faviconUrlInput.dispatchEvent(new Event('input'));
+                syncPresetHighlight();
+            });
+        });
+        tabNameInput.addEventListener('input', syncPresetHighlight);
+        faviconUrlInput.addEventListener('input', syncPresetHighlight);
        
         // Invisibility Cloak Implementation
         let invisibilityEnabled = false;
@@ -1961,6 +2138,7 @@
         const gameOverlayToggle = document.getElementById('game-overlay-toggle');
         gameOverlayToggle.onchange = function() {
             gameOverlayEnabled = this.checked;
+            localStorage.setItem('solus_overlay', this.checked);
         };
        
         // Panic Key Implementation
@@ -2007,16 +2185,21 @@
         };
        
         openBackgroundTabBtn.onclick = function() {
-            const url = panicBackgroundUrl.value.trim() || 'https://classroom.google.com';
-           
+            const url = normalizeHttpUrl(panicBackgroundUrl.value.trim()) || 'https://classroom.google.com';
+
             backgroundTab = window.open(url, '_blank');
-           
+
             if (backgroundTab) {
                 window.focus();
-                openBackgroundTabBtn.textContent = 'Tab Ready ✓';
+                openBackgroundTabBtn.textContent = 'Tab Ready';
                 openBackgroundTabBtn.style.background = '#28a745';
+                // Reset so a later click is not blocked by stale "success" state
+                setTimeout(() => {
+                    openBackgroundTabBtn.textContent = 'Open Background Tab';
+                    openBackgroundTabBtn.style.background = '';
+                }, 2000);
             } else {
-                openBackgroundTabBtn.textContent = 'Pop-up Blocked!';
+                openBackgroundTabBtn.textContent = 'Pop-up Blocked';
                 openBackgroundTabBtn.style.background = '#dc3545';
                 setTimeout(() => {
                     openBackgroundTabBtn.textContent = 'Open Background Tab';
@@ -2028,9 +2211,9 @@
         document.addEventListener('keydown', (e) => {
             if (panicKeyEnabled && e.key === 'Escape') {
                 e.preventDefault();
-               
+
                 if (panicMode === 'redirect') {
-                    window.location.href = panicUrl;
+                    window.location.href = normalizeHttpUrl(panicUrl) || 'https://classroom.google.com';
                 } else if (panicMode === 'background') {
                     if (backgroundTab) {
                         try {
@@ -2041,6 +2224,10 @@
                 }
             }
         });
+
+        // Initial restore: runs here because every runtime variable and toggle
+        // reference above now exists
+        restoreSettings();
        
         // about:blank Cloaking
         const aboutBlankBtn = document.getElementById('aboutblank-btn');
@@ -2065,16 +2252,16 @@
         // =====================================================
         // LIBRARY EXPORT / IMPORT
         // Dumps all localStorage AND all IndexedDB databases
-        // on this origin — works on any domain/port.
+        // on this origin, works on any domain/port.
         // =====================================================
 
-        // Binary serialization — JSON can't handle ArrayBuffer/Blob/TypedArray
+        // Binary serialization, JSON can't handle ArrayBuffer/Blob/TypedArray
         function valueToSerializable(val) {
             if (val instanceof ArrayBuffer) {
                 return { __type: 'ArrayBuffer', data: bufToB64(val) };
             }
             if (val instanceof Blob) {
-                // Blobs can't be read synchronously — mark for async handling
+                // Blobs can't be read synchronously, mark for async handling
                 // We handle them via getAllKeys/getAll which returns them, but
                 // JSON.stringify will drop them. Convert to ArrayBuffer first via FileReader.
                 return { __type: 'Blob', data: null, size: val.size, blobType: val.type };
@@ -2091,13 +2278,20 @@
             return val;
         }
 
+        // Whitelist for __type tags. The old code did self[val.__type], which let
+        // a crafted backup reach arbitrary globals like Function.
+        const TYPED_ARRAY_NAMES = [
+            'Int8Array', 'Uint8Array', 'Uint8ClampedArray',
+            'Int16Array', 'Uint16Array', 'Int32Array', 'Uint32Array',
+            'Float32Array', 'Float64Array', 'BigInt64Array', 'BigUint64Array'
+        ];
+
         function valueFromSerializable(val) {
             if (val && val.__type === 'ArrayBuffer') return b64ToBuf(val.data);
             if (val && val.__type === 'Blob') return new Blob([], { type: val.blobType || '' }); // best effort
-            if (val && val.__type) {
+            if (val && TYPED_ARRAY_NAMES.includes(val.__type)) {
                 const buf = b64ToBuf(val.data);
-                const TypedArray = self[val.__type];
-                return TypedArray ? new TypedArray(buf) : buf;
+                return new self[val.__type](buf);
             }
             if (Array.isArray(val)) return val.map(valueFromSerializable);
             if (val && typeof val === 'object') {
@@ -2232,7 +2426,7 @@
 
         async function exportLibrary() {
             const btn = document.getElementById('export-library-btn');
-            btn.textContent = 'Exporting…';
+            btn.textContent = 'Exporting...';
             btn.disabled = true;
             try {
                 const localStorageData = {};
@@ -2259,7 +2453,7 @@
                 a.click();
                 setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
 
-                btn.textContent = 'Exported ✓';
+                btn.textContent = 'Exported';
                 btn.style.background = '#28a745';
                 setTimeout(() => { btn.textContent = 'Export Backup'; btn.style.background = ''; btn.disabled = false; }, 2000);
             } catch(err) {
@@ -2274,7 +2468,7 @@
             const status = document.getElementById('import-library-status');
             const btn = document.getElementById('import-library-btn');
             btn.disabled = true;
-            status.textContent = 'Reading file…';
+            status.textContent = 'Reading file...';
             try {
                 const text = await file.text();
                 const payload = JSON.parse(text);
@@ -2290,25 +2484,37 @@
 
                 // Restore all IndexedDB (covers Solus games DB + any game save DBs)
                 if (payload.idbData && typeof payload.idbData === 'object') {
-                    status.textContent = 'Restoring saves…';
+                    status.textContent = 'Restoring saves...';
                     await restoreAllIndexedDB(payload.idbData);
                 }
 
                 // Legacy v3 backup support: games array
                 if (Array.isArray(payload.games)) {
                     const existing = await getAllGames();
-                    const existingNames = new Set(existing.map(g => g.name.toLowerCase()));
+                    const existingNames = new Set(existing.map(g => String(g.name).toLowerCase()));
                     for (const game of payload.games) {
+                        // Validate shape: one malformed entry should not abort
+                        // the whole restore (the old code crashed on missing name)
+                        if (!game || typeof game !== 'object') continue;
                         const { id: _id, ...gameData } = game;
-                        if (!existingNames.has(gameData.name.toLowerCase())) {
-                            await saveGame({ ...gameData, timestamp: gameData.timestamp || Date.now() });
+                        const name = String(gameData.name == null ? '' : gameData.name).trim();
+                        if (!name || name.length > 80) continue;
+                        if (!existingNames.has(name.toLowerCase())) {
+                            await saveGame({
+                                name,
+                                cover: String(gameData.cover || ''),
+                                htmlContent: String(gameData.htmlContent || ''),
+                                timestamp: Number(gameData.timestamp) || Date.now()
+                            });
+                            existingNames.add(name.toLowerCase());
                         }
                     }
                 }
 
-                restoreSettingsUI();
+                restoreSettings();
                 loadGames();
-                status.textContent = 'Restore complete ✓';
+                renderStats();
+                status.textContent = 'Restore complete';
                 btn.style.background = '#28a745';
                 setTimeout(() => { status.textContent = ''; btn.style.background = ''; btn.disabled = false; }, 3000);
             } catch(err) {
@@ -2341,172 +2547,605 @@
         })();
     </script>
 
-<!-- Paste right before </body> -->
-
+<!-- One-time setup tutorial (replaces the old update notice).
+     Runs once per device, gated on the solus_tutorial_v1 localStorage key.
+     The page is blocked until the tour is finished; steps marked "require"
+     stay locked until the user actually interacts with that setting.
+     Visuals: spotlight cutout via the ring's spread box-shadow (the four
+     blockers stay transparent and only handle click-blocking), animated
+     ring/card transitions, progress bar, per-step icon, light/glass variants. -->
 <style>
-  #solus-notice-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: 99999;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    animation: overlayIn 0.3s ease;
-  }
-
-  @keyframes overlayIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-
-  #solus-notice-box {
-    background: var(--bg-medium, #28384d);
-    border: 1px solid var(--border-color, #384e68);
-    border-radius: 12px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.04);
-    padding: 32px 36px;
-    max-width: 480px;
-    width: calc(100% - 40px);
-    animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  @keyframes popIn {
-    from { opacity: 0; transform: scale(0.88) translateY(16px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
-  }
-
-  #solus-notice-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(0, 123, 255, 0.15);
-    border: 1px solid rgba(0, 123, 255, 0.35);
-    color: var(--accent-blue, #007bff);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 4px 10px;
-    border-radius: 20px;
-    margin-bottom: 16px;
-  }
-
-  #solus-notice-badge::before {
-    content: '';
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent-blue, #007bff);
-    animation: pulse 1.6s ease infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.4; transform: scale(0.7); }
-  }
-
-  #solus-notice-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-light, #e0e6ed);
-    margin-bottom: 14px;
-    line-height: 1.3;
-  }
-
-  #solus-notice-body {
-    font-size: 0.95rem;
-    color: rgba(224, 230, 237, 0.8);
-    line-height: 1.65;
-    margin-bottom: 28px;
-  }
-
-  #solus-notice-body strong {
-    color: var(--text-light, #e0e6ed);
-  }
-
-  #solus-notice-divider {
-    height: 1px;
-    background: var(--border-color, #384e68);
-    margin: 0 -36px 24px;
-  }
-
-  #solus-notice-close {
-    display: block;
+  #solus-tutorial {
+    --tut-dim: rgba(5, 10, 18, 0.66);
+    --tut-accent: var(--accent-blue, #007bff);
+    --tut-card-bg: var(--bg-medium, #28384d);
+    --tut-card-border: var(--border-color, #384e68);
+    --tut-title: var(--text-light, #e0e6ed);
+    --tut-text: var(--text-light, #e0e6ed);
+    --tut-track: rgba(127, 143, 166, 0.25);
+    --tut-back-border: var(--border-color, #384e68);
+    --tut-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    display: none; /* shown only while the tour runs */
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    padding: 11px;
-    background: var(--accent-blue, #007bff);
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.95rem;
+    z-index: 99999;
+    pointer-events: none;
+  }
+  /* Click guards around the spotlight hole. Transparent while a target is
+     highlighted (the ring's box-shadow does the dimming); carry the dim
+     themselves on centered steps so there is no hole at all. */
+  .solus-tut-blocker {
+    position: absolute;
+    background: var(--tut-dim);
+    pointer-events: auto;
+    transition: background-color 0.3s ease;
+  }
+  #solus-tutorial.solus-tut-target .solus-tut-blocker { background: transparent; }
+  #solus-tut-ring {
+    position: absolute;
+    border: 2px solid var(--tut-accent);
+    border-radius: 12px;
+    opacity: 0;
+    visibility: hidden;
+    box-shadow:
+      0 0 0 9999px var(--tut-dim),
+      0 0 26px rgba(0, 123, 255, 0.35),
+      inset 0 0 16px rgba(0, 123, 255, 0.22);
+    pointer-events: none;
+    transition:
+      left 0.34s var(--tut-ease), top 0.34s var(--tut-ease),
+      width 0.34s var(--tut-ease), height 0.34s var(--tut-ease),
+      opacity 0.28s ease, visibility 0.28s ease;
+  }
+  #solus-tut-ring.solus-tut-on { opacity: 1; visibility: visible; }
+  /* soft radar ping on the highlight, transform/opacity only (cheap) */
+  #solus-tut-ring::after {
+    content: '';
+    position: absolute;
+    inset: -7px;
+    border: 1px solid var(--tut-accent);
+    border-radius: inherit;
+    opacity: 0;
+    animation: solus-tut-ping 2.1s ease-out infinite;
+  }
+  @keyframes solus-tut-ping {
+    0%   { opacity: 0.65; transform: scale(0.985); }
+    70%  { opacity: 0;    transform: scale(1.055); }
+    100% { opacity: 0;    transform: scale(1.055); }
+  }
+  #solus-tut-card {
+    position: absolute;
+    width: min(408px, calc(100vw - 28px));
+    background: var(--tut-card-bg);
+    border: 1px solid var(--tut-card-border);
+    border-radius: 14px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.3);
+    padding: 24px 22px 18px;
+    overflow: hidden;
+    pointer-events: auto;
+    transition: left 0.34s var(--tut-ease), top 0.34s var(--tut-ease);
+  }
+  /* content swap when moving between steps */
+  #solus-tutorial.solus-tut-ready #solus-tut-card.solus-tut-swap {
+    animation: solus-tut-swap 0.32s cubic-bezier(0.3, 0.7, 0.3, 1);
+  }
+  @keyframes solus-tut-swap {
+    from { opacity: 0.3; transform: translateY(8px) scale(0.985); }
+  }
+  /* scrolling/resize must track instantly, kill transitions briefly */
+  #solus-tutorial.solus-tut-noanim #solus-tut-ring,
+  #solus-tutorial.solus-tut-noanim #solus-tut-card { transition: none !important; }
+  #solus-tut-progress {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--tut-track);
+  }
+  #solus-tut-progress i {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--tut-accent), #4da3ff);
+    border-radius: 0 2px 2px 0;
+    transition: width 0.4s var(--tut-ease);
+  }
+  .solus-tut-head {
+    margin-bottom: 12px;
+  }
+  #solus-tut-step {
+    font-size: 0.66rem;
     font-weight: 700;
-    font-family: inherit;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--tut-accent);
+    margin-bottom: 3px;
+  }
+  #solus-tut-title {
+    font-size: 1.14rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--tut-title);
+  }
+  #solus-tut-body {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--tut-text);
+    opacity: 0.85;
+    margin-bottom: 18px;
+  }
+  #solus-tut-body strong { color: var(--tut-title); font-weight: 600; }
+  #solus-tut-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  #solus-tut-back {
+    padding: 9px 16px;
+    background: transparent;
+    color: var(--tut-text);
+    border: 1px solid var(--tut-back-border);
+    border-radius: 8px;
     cursor: pointer;
-    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-    letter-spacing: 0.3px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    transition: border-color 0.2s, color 0.2s, background-color 0.2s;
   }
-
-  #solus-notice-close:hover {
-    background: var(--accent-hover, #0060c0);
-    box-shadow: 0 0 14px rgba(0, 123, 255, 0.5);
+  #solus-tut-back:hover {
+    border-color: var(--tut-accent);
+    color: var(--tut-accent);
+    background: rgba(0, 123, 255, 0.07);
   }
-
-  #solus-notice-close:active {
-    transform: scale(0.98);
+  #solus-tut-next {
+    width: auto;
+    padding: 10px 26px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #339dff, #0066d6);
+    font-size: 0.92rem;
+    letter-spacing: 0.2px;
+    transition: filter 0.2s, box-shadow 0.2s, transform 0.15s, opacity 0.2s;
   }
-
-  .glass-theme #solus-notice-box {
-    background: rgba(15, 23, 42, 0.7);
+  #solus-tut-next:hover:not(:disabled) {
+    background: linear-gradient(135deg, #4daaff, #0a72e0);
+    box-shadow: 0 4px 16px rgba(0, 123, 255, 0.45);
+    transform: translateY(-1px);
+  }
+  #solus-tut-next:active:not(:disabled) { transform: translateY(0); }
+  #solus-tut-next:disabled,
+  #solus-tut-next:disabled:hover {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: linear-gradient(135deg, #339dff, #0066d6);
+    box-shadow: none;
+    transform: none;
+  }
+  /* --- LIGHT THEME --- */
+  .light-theme #solus-tutorial {
+    --tut-dim: rgba(15, 23, 42, 0.55);
+    --tut-card-bg: #ffffff;
+    --tut-card-border: #d4dae2;
+    --tut-title: #1e2836;
+    --tut-text: #333333;
+    --tut-track: rgba(30, 40, 54, 0.08);
+    --tut-back-border: #ccd4dd;
+  }
+  .light-theme #solus-tut-card { box-shadow: 0 18px 44px rgba(15, 23, 42, 0.3), 0 2px 8px rgba(15, 23, 42, 0.12); }
+  .light-theme #solus-tut-next,
+  .light-theme #solus-tut-next:disabled { color: #fff; }
+  /* --- GLASS THEME --- */
+  .glass-theme #solus-tutorial {
+    --tut-dim: rgba(2, 6, 14, 0.74);
+    --tut-accent: #0a84ff;
+  }
+  .glass-theme #solus-tut-card {
+    background: rgba(13, 20, 36, 0.72);
     backdrop-filter: blur(40px) saturate(180%);
     -webkit-backdrop-filter: blur(40px) saturate(180%);
-    border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.05);
+    border-color: rgba(255, 255, 255, 0.14);
   }
-
-  .light-theme #solus-notice-box {
-    background: #ffffff;
-    border-color: #cccccc;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  /* --- SMALL SCREENS --- */
+  @media (max-width: 560px) {
+    #solus-tut-card { padding: 18px 16px 14px; border-radius: 12px; }
+    .solus-tut-head { margin-bottom: 10px; }
+    #solus-tut-title { font-size: 1.04rem; }
+    #solus-tut-body { font-size: 0.88rem; margin-bottom: 14px; }
+    #solus-tut-back { padding: 9px 13px; font-size: 0.85rem; }
+    #solus-tut-next { padding: 10px 20px; flex: 1; max-width: 190px; margin-left: auto; }
   }
-
-  .light-theme #solus-notice-body {
-    color: #555;
+  @media (max-width: 360px) {
+    #solus-tut-title { font-size: 0.98rem; }
+    #solus-tut-body { font-size: 0.85rem; }
   }
-
-  .light-theme #solus-notice-divider {
-    background: #e0e0e0;
+  @media (prefers-reduced-motion: reduce) {
+    #solus-tut-ring, #solus-tut-card, #solus-tut-progress i, .solus-tut-blocker {
+      transition: none !important;
+    }
+    #solus-tut-ring::after,
+    #solus-tutorial.solus-tut-ready #solus-tut-card.solus-tut-swap { animation: none !important; }
   }
 </style>
 
-<div id="solus-notice-overlay">
-  <div id="solus-notice-box" role="dialog" aria-modal="true">
-    <div id="solus-notice-badge">Update Notice</div>
-    <div id="solus-notice-title">Deltarune Chapter 5 & Among Us</div>
-    <div id="solus-notice-divider"></div>
-    <div id="solus-notice-body">
-      <strong>Deltarune Chapter 5</strong> and <strong>Among Us</strong> have been added and save progress is retained. Deltarune also now supports importing saves from the EXE version. <br><br>Happy Gaming!
+<div id="solus-tutorial">
+  <div class="solus-tut-blocker" id="solus-tut-b-top"></div>
+  <div class="solus-tut-blocker" id="solus-tut-b-bottom"></div>
+  <div class="solus-tut-blocker" id="solus-tut-b-left"></div>
+  <div class="solus-tut-blocker" id="solus-tut-b-right"></div>
+  <div id="solus-tut-ring"></div>
+  <div id="solus-tut-card" role="dialog" aria-modal="true" aria-label="Setup tutorial">
+    <div id="solus-tut-progress" aria-hidden="true"><i></i></div>
+    <div class="solus-tut-head">
+      <div>
+        <div id="solus-tut-step"></div>
+        <div id="solus-tut-title"></div>
+      </div>
     </div>
-    <button id="solus-notice-close">Thanks, Got It!</button>
+    <div id="solus-tut-body" aria-live="polite"></div>
+    <div id="solus-tut-footer">
+      <button id="solus-tut-back" type="button">Back</button>
+      <button id="solus-tut-next" class="launch-btn" type="button">Next</button>
+    </div>
   </div>
 </div>
 
 <script>
-  (function() {
-    const KEY = 'solus_deltarune_notice_v1';
-    if (localStorage.getItem(KEY)) return;
-    const overlay = document.getElementById('solus-notice-overlay');
-    overlay.style.display = 'flex';
-    document.getElementById('solus-notice-close').onclick = function() {
-      overlay.style.animation = 'overlayIn 0.2s ease reverse forwards';
-      document.getElementById('solus-notice-box').style.animation = 'popIn 0.2s ease reverse forwards';
-      setTimeout(() => overlay.remove(), 220);
-      localStorage.setItem(KEY, '1');
-    };
+  (function () {
+    var KEY = 'solus_tutorial_v1';
+    try { if (localStorage.getItem(KEY)) return; } catch (e) { return; }
+
+    var STEPS = [
+      { centered: true, title: 'Quick setup tour', next: 'Start',
+        body: 'Solus MS runs entirely in this browser tab. Games, saves and settings all live on this device. ' +
+              'This tour shows you what everything does, and a few steps ask you to try a setting for real before you can move on. ' +
+              'It only plays once.' },
+      { page: 'library', title: 'Getting around',
+        target: function () {
+          return document.body.classList.contains('mobile-mode')
+            ? document.querySelector('.mobile-nav')
+            : document.querySelector('.sidebar .nav-list');
+        },
+        body: 'Five pages. <strong>Library</strong> to browse and launch. <strong>Add New Game</strong> to import your own HTML games. ' +
+              '<strong>Stats</strong> for play history. <strong>Settings</strong> for the cloaks and launch options. ' +
+              '<strong>About</strong> for version info, alternate links and the theme switcher.' },
+      { page: 'library', title: 'Search', target: '.search-wrapper',
+        body: 'Filters the grid as you type, covering built in games and your own imports at the same time.' },
+      { page: 'settings', title: 'Tab Cloak', target: '#tab-name-input', expand: '.setting-item',
+        require: { sel: '#tab-name-input', event: 'input', needText: true },
+        body: 'Renames this browser tab. Type something like <strong>Google</strong>, or tap a Quick Preset below, ' +
+              'and watch the tab title change. The name is saved on this device and carries over to the tabs games launch in.' },
+      { page: 'settings', title: 'Tab Logo Cloak', target: '#favicon-url-input', expand: '.setting-item',
+        body: 'Swaps the tab icon to any image URL. The Quick Presets below fill the name and logo together, ' +
+              'and the fetcher link pulls favicons straight from other sites. A URL applies live as you type.' },
+      { page: 'settings', title: 'Invisibility Cloak', target: '#invisibility-cloak-toggle', expand: '.setting-item',
+        body: 'Blanks the tab title and icon the moment you switch to another window, and restores both when you come back.' },
+      { page: 'settings', title: 'Panic Key', target: '#panic-key-toggle', expand: '.setting-item',
+        require: { sel: '#panic-key-toggle', event: 'change', count: 1 },
+        body: 'When on, pressing <strong>ESC</strong> jumps you out. <strong>Simple Redirect</strong> navigates this tab to a URL you set. ' +
+              '<strong>Background Tab</strong> swaps to a safe tab you already have open. Flip the switch to see the options.' },
+      { page: 'settings', title: 'about:blank Cloak', target: '#aboutblank-btn', expand: '.setting-item', guard: '#aboutblank-btn',
+        body: 'Reopens Solus inside a blank window and sends this tab to Google, leaving nothing but <strong>about:blank</strong> in the address bar.' },
+      { page: 'settings', title: 'Reflection Cloak', target: '#reflection-cloak-toggle', expand: '.setting-item',
+        require: { sel: '#reflection-cloak-toggle', event: 'change', count: 2 },
+        body: 'Dims the page and drains its color so it is hard to read from across a room. ' +
+              'Turn it on to see the effect, then off again. You can re-enable it any time.' },
+      { page: 'settings', title: 'Launch Options', target: '#settings-page .settings-group:nth-of-type(2)',
+        body: '<strong>Game Overlay</strong> runs games in a fullscreen frame inside this page instead of a new tab, and the panic key still works there. ' +
+              '<strong>Display Mode</strong> switches between the desktop sidebar and the mobile bottom bar.' },
+      { page: 'settings', title: 'Backup', target: '#settings-page .settings-group:nth-of-type(3)',
+        body: 'Your library and saves exist only in this browser storage. <strong>Export</strong> downloads a full backup of games, saves and settings. ' +
+              '<strong>Import</strong> restores it, for example on another device. Export before clearing site data.' },
+      { page: 'about', title: 'Themes', target: '#theme-select', expand: '.setting-item',
+        require: { sel: '#theme-select', event: 'change', count: 1 },
+        body: 'Three looks: <strong>Deep Blue</strong>, <strong>Light</strong> and <strong>Glass</strong>. Pick one and it applies immediately, this card included, and is saved on this device.' },
+      { centered: true, title: 'All set', next: 'Finish',
+        body: 'Everything you just tried is already saved. This tour will not show again on this device. ' +
+              'The Settings page keeps all of it in one place if you need a reminder.' }
+    ];
+    var LAST = STEPS.length - 1;
+
+    var root = document.getElementById('solus-tutorial');
+    var bTop = document.getElementById('solus-tut-b-top');
+    var bBottom = document.getElementById('solus-tut-b-bottom');
+    var bLeft = document.getElementById('solus-tut-b-left');
+    var bRight = document.getElementById('solus-tut-b-right');
+    var ring = document.getElementById('solus-tut-ring');
+    var card = document.getElementById('solus-tut-card');
+    var progFill = document.querySelector('#solus-tut-progress i');
+    var stepLabel = document.getElementById('solus-tut-step');
+    var titleLabel = document.getElementById('solus-tut-title');
+    var bodyLabel = document.getElementById('solus-tut-body');
+    var backBtn = document.getElementById('solus-tut-back');
+    var nextBtn = document.getElementById('solus-tut-next');
+
+    var cur = -1;
+    var stepEl = null;
+    var done = Object.create(null);
+    var reqEl = null, reqHandler = null, reqEventName = null, reqCount = 0;
+    var guardEl = null, guardHandler = null;
+    var glideUntil = 0, noanimTimer = null;
+
+    function setRect(el, l, t, w, h) {
+      el.style.left = l + 'px';
+      el.style.top = t + 'px';
+      el.style.width = Math.max(0, w) + 'px';
+      el.style.height = Math.max(0, h) + 'px';
+    }
+
+    // Big jumps (step to step, page to page) cut straight to the spot; only
+    // small adjustments glide, so the ring never flies across the screen and
+    // screenshots always catch it settled on the target.
+    function placeAt(el, l, t, w, h) {
+      var r = el.getBoundingClientRect();
+      if (Math.abs(r.left - l) > 120 || Math.abs(r.top - t) > 120 ||
+          Math.abs(r.width - w) > 120 || Math.abs(r.height - h) > 120) {
+        el.style.transition = 'none';
+        setRect(el, l, t, w, h);
+        void el.offsetWidth; // flush so later small moves animate again
+        el.style.transition = '';
+      } else {
+        setRect(el, l, t, w, h);
+      }
+    }
+
+    // Fixed bottom nav eats the lower part of the viewport on mobile, keep
+    // the card clear of it.
+    function bottomInset() {
+      var nav = document.getElementById('mobile-nav');
+      if (!document.body.classList.contains('mobile-mode') || !nav) return 0;
+      try { if (getComputedStyle(nav).display === 'none') return 0; } catch (e) {}
+      return nav.offsetHeight + 12;
+    }
+
+    function place() {
+      var step = STEPS[cur];
+      if (!step) return;
+      var docH = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+      var docW = Math.max(document.documentElement.scrollWidth, document.body.scrollWidth, window.innerWidth);
+      root.style.height = docH + 'px';
+      var vw = window.innerWidth, vh = window.innerHeight;
+      var ox = window.scrollX || document.documentElement.scrollLeft || document.body.scrollLeft || 0;
+      var oy = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      var navPad = bottomInset();
+      var floor = oy + vh - navPad; // lowest y the card may reach
+
+      if (!step.centered && stepEl) {
+        root.classList.add('solus-tut-target');
+        ring.classList.add('solus-tut-on');
+        var r = stepEl.getBoundingClientRect();
+        // Spotlight only the on-screen part of oversized targets; a stretched
+        // sidebar or taller-than-viewport row would otherwise ring the page.
+        var vh0 = window.innerHeight, vw0 = window.innerWidth;
+        if (r.height > vh0 || r.width > vw0) {
+          var iL = Math.max(r.left, 0), iR = Math.min(r.right, vw0);
+          var iT = Math.max(r.top, 0), iB = Math.min(r.bottom, vh0);
+          if (iR - iL > 40 && iB - iT > 40) {
+            r = { left: iL, top: iT, width: iR - iL, height: iB - iT };
+          }
+        }
+        var pad = 6;
+        var l = r.left + ox - pad, t = r.top + oy - pad;
+        var w = r.width + pad * 2, h = r.height + pad * 2;
+        // blockers are invisible here, geometry only matters for click-blocking
+        setRect(bTop, 0, 0, docW, t);
+        setRect(bBottom, 0, t + h, docW, docH - (t + h));
+        setRect(bLeft, 0, t, l, h);
+        setRect(bRight, l + w, t, docW - (l + w), h);
+        placeAt(ring, l, t, w, h);
+
+        var cw = card.offsetWidth, ch = card.offsetHeight;
+        var fitsBelow = (t + h + 14 + ch) <= floor;
+        var fitsAbove = (t - 14 - ch) >= oy;
+        var cardTop, cardLeft;
+        if (fitsBelow || fitsAbove) {
+          cardTop = fitsBelow ? t + h + 14 : t - ch - 14;
+          cardLeft = Math.max(l, ox + 16);
+          if (cardLeft + cw > ox + vw - 16) cardLeft = Math.max(ox + 16, ox + vw - cw - 16);
+        } else if (l + w + 14 + cw <= ox + vw - 16) {
+          // tall target with room alongside: park the card to its right, centered on it
+          cardLeft = l + w + 14;
+          cardTop = Math.min(Math.max(t + (h - ch) / 2, oy + 12), floor - ch - 12);
+        } else if (l - 14 - cw >= ox + 16) {
+          cardLeft = l - cw - 14;
+          cardTop = Math.min(Math.max(t + (h - ch) / 2, oy + 12), floor - ch - 12);
+        } else {
+          cardTop = oy + 12;
+          cardLeft = Math.max(l, ox + 16);
+          if (cardLeft + cw > ox + vw - 16) cardLeft = Math.max(ox + 16, ox + vw - cw - 16);
+        }
+        placeAt(card, cardLeft, cardTop, cw, ch);
+      } else {
+        root.classList.remove('solus-tut-target');
+        ring.classList.remove('solus-tut-on');
+        setRect(bTop, 0, 0, docW, docH);
+        setRect(bBottom, 0, 0, 0, 0);
+        setRect(bLeft, 0, 0, 0, 0);
+        setRect(bRight, 0, 0, 0, 0);
+        var cw2 = card.offsetWidth, ch2 = card.offsetHeight;
+        var cTop = Math.round(Math.max(oy + (vh - navPad - ch2) / 2, oy + 12));
+        placeAt(card, ox + Math.round((vw - cw2) / 2), cTop, cw2, ch2);
+      }
+    }
+
+    function detachRequire() {
+      if (reqEl && reqHandler) reqEl.removeEventListener(reqEventName, reqHandler);
+      reqEl = null; reqHandler = null; reqEventName = null; reqCount = 0;
+      if (guardEl && guardHandler) guardEl.removeEventListener('click', guardHandler, true);
+      guardEl = null; guardHandler = null;
+    }
+
+    function attachRequire(step) {
+      var req = step.require;
+      if (req && !done[cur]) {
+        reqEl = document.querySelector(req.sel);
+        if (reqEl) {
+          reqCount = 0;
+          reqEventName = req.event;
+          reqHandler = function () {
+            if (req.count) {
+              reqCount++;
+              if (reqCount >= req.count) { done[cur] = true; updateLock(); }
+            } else if (req.needText) {
+              if (reqEl.value.trim()) { done[cur] = true; updateLock(); }
+            }
+          };
+          reqEl.addEventListener(reqEventName, reqHandler);
+        }
+      }
+      if (step.guard) {
+        guardEl = document.querySelector(step.guard);
+        if (guardEl) {
+          guardHandler = function (e) { e.preventDefault(); e.stopPropagation(); };
+          guardEl.addEventListener('click', guardHandler, true);
+        }
+      }
+    }
+
+    function updateLock() {
+      var step = STEPS[cur];
+      nextBtn.disabled = !!(step && step.require && !done[cur]);
+    }
+
+    // Spotlight radius follows the target's own corner rounding.
+    function fitRingRadius(el) {
+      var br = 0;
+      try { br = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0; } catch (e) {}
+      ring.style.borderRadius = Math.min(Math.max(br + 2, 8), 18) + 'px';
+    }
+
+    function go(i) {
+      detachRequire();
+      cur = Math.max(0, Math.min(LAST, i));
+      var step = STEPS[cur];
+      stepEl = null;
+      if (step.page && typeof showPage === 'function') showPage(step.page);
+      if (!step.centered) {
+        var t = typeof step.target === 'function' ? step.target() : document.querySelector(step.target);
+        if (t) stepEl = step.expand ? (t.closest(step.expand) || t) : t;
+      }
+      stepLabel.textContent = 'Step ' + (cur + 1) + ' of ' + STEPS.length;
+      titleLabel.textContent = step.title;
+      bodyLabel.innerHTML = step.body;
+      progFill.style.width = ((cur + 1) / STEPS.length * 100) + '%';
+      backBtn.style.visibility = cur === 0 ? 'hidden' : 'visible';
+      nextBtn.textContent = cur === LAST ? (step.next || 'Finish') : (step.next || 'Next');
+      updateLock();
+      attachRequire(step);
+      if (stepEl) {
+        fitRingRadius(stepEl);
+        // Centering a target taller than the viewport lands the scroll
+        // somewhere arbitrary; only bring compact targets in.
+        try {
+          if (stepEl.getBoundingClientRect().height < window.innerHeight * 0.9) {
+            stepEl.scrollIntoView({ block: 'center' });
+          }
+        } catch (e) {}
+      }
+      // let the card glide to its new spot; re-trigger the content swap
+      glideUntil = Date.now() + 450;
+      card.classList.remove('solus-tut-swap');
+      void card.offsetWidth;
+      card.classList.add('solus-tut-swap');
+      place();
+      setTimeout(place, 300);
+      setTimeout(place, 800); // late layout shifts (fonts, images)
+    }
+
+    function cleanup() {
+      detachRequire();
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('keydown', onKey, true);
+    }
+
+    function finish() {
+      try { localStorage.setItem(KEY, '1'); } catch (e) {}
+      cleanup();
+      root.remove();
+    }
+
+    var rafPending = false;
+    function onScroll() {
+      // programmatic scrolls fired by go() shouldn't cancel the glide
+      if (Date.now() < glideUntil) return;
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(function () {
+        rafPending = false;
+        root.classList.add('solus-tut-noanim');
+        clearTimeout(noanimTimer);
+        noanimTimer = setTimeout(function () { root.classList.remove('solus-tut-noanim'); }, 130);
+        place();
+      });
+    }
+
+    function onResize() {
+      root.classList.add('solus-tut-noanim');
+      clearTimeout(noanimTimer);
+      noanimTimer = setTimeout(function () { root.classList.remove('solus-tut-noanim'); }, 130);
+      place();
+    }
+
+    // While the tour is up: swallow ESC (panic key must not fire mid-tour)
+    // and any Enter/Space aimed outside the card or the highlighted control.
+    // Arrow keys move between steps, unless they're steering a text caret.
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); return; }
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        var t = e.target;
+        var tag = t && t.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (t && t.isContentEditable) return;
+        if (e.key === 'ArrowRight') { if (!nextBtn.disabled) go(cur + 1); return; }
+        if (cur > 0) go(cur - 1);
+        return;
+      }
+      if (e.key === 'Enter' || e.key === ' ') {
+        var t = e.target;
+        if (t && (card.contains(t) || (stepEl && stepEl.contains(t)))) return;
+        e.preventDefault();
+        return;
+      }
+      // Keep Tab focus inside the card and the highlighted control.
+      if (e.key === 'Tab') {
+        var focusables = Array.prototype.filter.call(
+          card.querySelectorAll('button, [href], input, select, textarea'),
+          function (n) { return !n.disabled && n.offsetParent !== null; }
+        );
+        if (stepEl) {
+          var inner = stepEl.querySelectorAll('button, [href], input, select, textarea');
+          for (var k = 0; k < inner.length; k++) focusables.push(inner[k]);
+        }
+        if (!focusables.length) return;
+        var idx = focusables.indexOf(document.activeElement);
+        if (idx === -1) {
+          focusables[0].focus();
+          e.preventDefault();
+        } else {
+          var next = e.shiftKey ? idx - 1 : idx + 1;
+          if (next < 0) next = focusables.length - 1;
+          if (next >= focusables.length) next = 0;
+          focusables[next].focus();
+          e.preventDefault();
+        }
+      }
+    }
+
+    backBtn.addEventListener('click', function () { if (cur > 0) go(cur - 1); });
+    nextBtn.addEventListener('click', function () {
+      if (nextBtn.disabled) return;
+      if (cur === LAST) finish();
+      else go(cur + 1);
+    });
+    window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('keydown', onKey, true);
+    root.style.display = 'block';
+    go(0);
+    // first placement happens at 0,0-less coords already, only then allow gliding
+    requestAnimationFrame(function () { root.classList.add('solus-tut-ready'); });
   })();
 </script>
+
 </body>
 </html>
