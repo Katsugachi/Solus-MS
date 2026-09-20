@@ -999,6 +999,142 @@
             -webkit-flex-shrink: 0;
             flex-shrink: 0;
         }
+
+        /* === PREVIEW GAME: Ink & Brine (begin) === */
+        /* Styles for the locked "Play" button and the preview-key dialog.
+           Delete this whole block together with the matching HTML/JS blocks
+           to remove the preview game. */
+
+        /* Greyed-out Play button on preview games */
+        .launch-btn.preview-locked {
+            background-color: #6b7280;
+            opacity: 0.75;
+            cursor: pointer;
+        }
+
+        .launch-btn.preview-locked:hover {
+            background-color: #6b7280;
+            opacity: 0.9;
+            box-shadow: none;
+        }
+
+        /* Preview-key dialog */
+        #preview-key-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(0, 0, 0, 0.6);
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-justify-content: center;
+            justify-content: center;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+
+        #preview-key-modal.active {
+            display: -webkit-flex;
+            display: flex;
+        }
+
+        .preview-modal-card {
+            background-color: var(--bg-medium);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 26px 24px;
+            width: 360px;
+            max-width: calc(100vw - 32px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .preview-modal-card h3 {
+            margin-bottom: 10px;
+            color: var(--accent-blue);
+            font-size: 1.2rem;
+        }
+
+        .preview-modal-card p {
+            font-size: 0.9rem;
+            margin-bottom: 14px;
+            opacity: 0.85;
+            line-height: 1.45;
+        }
+
+        #preview-key-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        #preview-key-input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        #preview-key-error {
+            display: none;
+            color: #ff8a8a;
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+
+        #preview-key-error.show {
+            display: block;
+        }
+
+        .preview-modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .preview-modal-buttons button {
+            -webkit-flex: 1;
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        #preview-key-cancel {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+        }
+
+        #preview-key-cancel:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .glass-theme .preview-modal-card {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(40px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .glass-theme #preview-key-input {
+            background: rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        .light-theme .preview-modal-card {
+            background-color: #ffffff;
+        }
+
+        .light-theme #preview-key-input {
+            background-color: #ffffff;
+            color: #333333;
+        }
+        /* === PREVIEW GAME: Ink & Brine (end) === */
     </style>
 </head>
 <body>
@@ -1237,7 +1373,7 @@
                     <h3>Version Details</h3>
                     <div class="setting-item">
                         <span>Application Version</span>
-                        <strong>3.0.0 (Stats & Search)</strong>
+                        <strong>3.0.3 (Tutorial + Ink & Brine)</strong>
                     </div>
                     <div class="setting-item">
                       <span>Interface Theme</span>
@@ -1308,6 +1444,23 @@
         <iframe id="game-overlay-frame" allowfullscreen allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>
     </div>
 
+    <!-- === PREVIEW GAME: Ink & Brine (begin) === -->
+    <!-- Preview-key dialog for locked preview games. Delete with the matching
+         CSS + JS blocks to remove the preview game. -->
+    <div id="preview-key-modal" role="dialog" aria-modal="true" aria-labelledby="preview-key-title">
+        <div class="preview-modal-card">
+            <h3 id="preview-key-title">Limited Preview</h3>
+            <p>This game is part of a limited preview, enter a preview key</p>
+            <input type="password" id="preview-key-input" class="text-input" placeholder="Preview Key" autocomplete="off" autocapitalize="off" spellcheck="false">
+            <p id="preview-key-error">Incorrect</p>
+            <div class="preview-modal-buttons">
+                <button type="button" id="preview-key-cancel">Cancel</button>
+                <button type="button" class="launch-btn" id="preview-key-submit" style="background-color: var(--accent-blue);">Unlock</button>
+            </div>
+        </div>
+    </div>
+    <!-- === PREVIEW GAME: Ink & Brine (end) === -->
+
     <!-- Mobile bottom nav, must be in DOM before the script runs -->
     <nav class="mobile-nav" id="mobile-nav" aria-label="Main navigation">
         <button class="mobile-nav-item active" id="mnav-library" aria-label="Library">
@@ -1339,6 +1492,12 @@
             { name: "Geometry Dash Lite", cover: "gd.png", url: "gd.html" },
             { name: "Undertale", cover: "undertale.png", url: "undertale.html" },
             { name: "Deltarune", cover: "deltarune.png", url: "deltarune.html" },
+            // === PREVIEW GAME: Ink & Brine (begin) ===
+            // Limited preview: the Play button is locked until the user enters
+            // a preview key (see the matching CSS + JS blocks). Remove this
+            // entry and those blocks to take the game down.
+            { name: "Ink & Brine (Preview)", cover: "ink.png", url: "ink.html", preview: true },
+            // === PREVIEW GAME: Ink & Brine (end) ===
             { name: "Balatro", cover: "balatro.jpg", url: "balatro.html" },
             { name: "Celeste", cover: "celeste.jpg", url: "celeste.html" },
             { name: "WOIM", cover: "woim.jpg", url: "woim.html" },
@@ -1463,6 +1622,12 @@
             const coverStyle = game.cover ? `background-image: url('${esc(game.cover)}');` : '';
             let launchUrl = isCustom ? blobUrlFor(game) : game.url;
 
+            // === PREVIEW GAME: Ink & Brine (begin) ===
+            const isPreview = !!game.preview;
+            const btnLabel = isPreview ? 'Preview' : 'Launch';
+            const btnClass = isPreview ? 'launch-btn preview-locked' : 'launch-btn';
+            // === PREVIEW GAME: Ink & Brine (end) ===
+
             card.innerHTML = `
                 <div class="game-image-placeholder" style="${coverStyle}">
                     ${game.cover ? '' : safeName}
@@ -1470,7 +1635,7 @@
                 <div class="game-info">
                     <h3>${safeName}</h3>
                     <div class="action-group">
-                        <a href="${esc(launchUrl)}" class="launch-btn" data-game-url="${esc(launchUrl)}" target="_blank" rel="noopener noreferrer">Launch</a>
+                        <a href="${esc(launchUrl)}" class="${btnClass}" data-game-url="${esc(launchUrl)}" target="_blank" rel="noopener noreferrer">${btnLabel}</a>
                         ${isCustom ? `<button class="launch-btn delete-btn" data-game-id="${esc(game.id)}" style="flex-grow: 0.5;">Delete</button>` : ''}
                     </div>
                 </div>
@@ -1480,6 +1645,21 @@
             launchBtn.addEventListener('click', (e) => {
                 e.preventDefault();
 
+                // === PREVIEW GAME: Ink & Brine (begin) ===
+                // Locked preview: intercept the click and ask for a key first.
+                // The modal calls back into launchGame() once the key matches.
+                if (isPreview) { openPreviewKeyModal(() => launchGame()); return; }
+                // === PREVIEW GAME: Ink & Brine (end) ===
+
+                launchGame();
+            });
+
+            // === PREVIEW GAME: Ink & Brine (begin) ===
+            // Launch flow shared by the normal Launch button and the preview
+            // unlock path. Nested so it closes over game/launchUrl/isCustom,
+            // which keeps the preview interception a one-line change above.
+            // === PREVIEW GAME: Ink & Brine (end) ===
+            function launchGame() {
                 // --- Stats: record launch timestamp ---
                 const statsKey = isCustom ? `solus_stats_custom_${game.id}` : `solus_stats_static_${game.name}`;
                 // Corrupted stats (manual edit, partial import) must not crash
@@ -1571,8 +1751,8 @@
                 const safePanic = safePanicUrl;
                 win.document.write(`<!DOCTYPE html><html><head><title>${esc(tabName)}</title><link rel="icon" id="tab-favicon" href="${esc(absFavicon)}"><style>*{margin:0;padding:0;box-sizing:border-box}body{width:100vw;height:100vh;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:none;display:block}</style></head><body><iframe src="${esc(launchUrl)}" allowfullscreen allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe><script>if(typeof BroadcastChannel!=='undefined'){const _bc=new BroadcastChannel('solus_playtime');const _t=Date.now();window.addEventListener('beforeunload',()=>_bc.postMessage({statsKey:${j(statsKey)},elapsed:Math.round((Date.now()-_t)/60000)}));}${invisEnabled?`const _favEl=document.getElementById('tab-favicon');document.addEventListener('visibilitychange',()=>{if(document.hidden){document.title='\\u3164';_favEl.href='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';}else{document.title=${j(tabName)};_favEl.href=${j(absFavicon)};}});`:''}${panicEnabled?`document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();window.location.href=${j(safePanic)};}});`:''}<\/script></body></html>`);
                 win.document.close();
-            });
-           
+            }
+
             if (isCustom) {
                 card.querySelector('.delete-btn').addEventListener('click', async (e) => {
                     const gameId = parseInt(e.target.dataset.gameId);
@@ -1584,6 +1764,72 @@
             }
             return card;
         }
+
+        // === PREVIEW GAME: Ink & Brine (begin) ===
+        // Locked-preview gate. The preview key is never stored in the clear:
+        // only its SHA-256 hash is embedded below, and what the user types is
+        // hashed in-browser (SubtleCrypto) and compared against it, so reading
+        // this file cannot reveal the key.
+        //
+        // Remove this block (with the staticGames entry, the modal HTML and the
+        // CSS block) to take the preview game down.
+        const PREVIEW_KEY_HASH = '133e025e1ac4beac08971b1c40834c1319ab6f08f61c5301998e03ab8051c428';
+
+        const previewModal = document.getElementById('preview-key-modal');
+        const previewInput = document.getElementById('preview-key-input');
+        const previewError = document.getElementById('preview-key-error');
+        const previewSubmit = document.getElementById('preview-key-submit');
+        const previewCancel = document.getElementById('preview-key-cancel');
+        let pendingPreviewUnlock = null;
+
+        async function sha256Hex(text) {
+            const data = new TextEncoder().encode(text);
+            const buf = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(buf))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
+
+        function openPreviewKeyModal(onUnlock) {
+            pendingPreviewUnlock = onUnlock;
+            previewInput.value = '';
+            previewError.classList.remove('show');
+            previewModal.classList.add('active');
+            previewInput.focus();
+        }
+
+        function closePreviewKeyModal() {
+            previewModal.classList.remove('active');
+            pendingPreviewUnlock = null;
+        }
+
+        previewSubmit.addEventListener('click', async () => {
+            if (!window.crypto || !crypto.subtle) {
+                previewError.textContent = 'Preview unlocking requires a secure (HTTPS) connection.';
+                previewError.classList.add('show');
+                return;
+            }
+            const hash = await sha256Hex(previewInput.value);
+            if (hash === PREVIEW_KEY_HASH) {
+                const unlock = pendingPreviewUnlock;
+                closePreviewKeyModal();
+                if (typeof unlock === 'function') unlock();
+            } else {
+                previewError.classList.add('show');
+                previewInput.focus();
+                previewInput.select();
+            }
+        });
+
+        previewCancel.addEventListener('click', closePreviewKeyModal);
+        previewModal.addEventListener('click', (e) => {
+            if (e.target === previewModal) closePreviewKeyModal();
+        });
+        previewInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); previewSubmit.click(); }
+            if (e.key === 'Escape') { e.preventDefault(); closePreviewKeyModal(); }
+        });
+        // === PREVIEW GAME: Ink & Brine (end) ===
 
         // --- BroadcastChannel: receive playtime when a game tab closes ---
         // BroadcastChannel is not available in older Safari, guard it
@@ -2576,13 +2822,7 @@
         })();
     </script>
 
-<!-- One-time setup tutorial (replaces the old update notice).
-     Runs once per device, gated on the solus_tutorial_v1 localStorage key.
-     The page is blocked until the tour is finished; steps marked "require"
-     stay locked until the user actually interacts with that setting.
-     Visuals: spotlight cutout via the ring's spread box-shadow (the four
-     blockers stay transparent and only handle click-blocking), animated
-     ring/card transitions, progress bar, per-step icon, light/glass variants. -->
+<!-- Hi. If you are reading this in hopes to remove the tutorial, press the bottom left corner of the screen, an invisible tag will disable it. If you are searching for Ink & Brine preview keys they aren't located here. -->
 <style>
   #solus-tutorial {
     --tut-dim: rgba(5, 10, 18, 0.66);
@@ -2798,6 +3038,33 @@
     #solus-tut-ring::after,
     #solus-tutorial.solus-tut-ready #solus-tut-card.solus-tut-swap { animation: none !important; }
   }
+
+  /* === TUTORIAL SKIP BUTTON (begin) === */
+  /* Invisible "skip tour" hotspot in the bottom-left corner. Fully
+     transparent (no background, no border, no text color) so it stays
+     unobtrusive; it is a child of #solus-tutorial, so it is removed
+     automatically when the tour ends or is skipped. Kept below #solus-tut-card
+     in DOM order so it can never swallow clicks on the card itself. */
+  #solus-tut-skip {
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
+    z-index: 40;
+    width: 128px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: transparent;
+    cursor: default;
+    pointer-events: auto;
+    font-family: inherit;
+    font-size: 0.85rem;
+  }
+  /* Keep the hotspot clear of the fixed bottom nav on mobile */
+  body.mobile-mode #solus-tut-skip { bottom: 68px; }
+  body.mobile-mode.landscape-small #solus-tut-skip { bottom: 60px; }
+  /* === TUTORIAL SKIP BUTTON (end) === */
 </style>
 
 <div id="solus-tutorial">
@@ -2806,6 +3073,9 @@
   <div class="solus-tut-blocker" id="solus-tut-b-left"></div>
   <div class="solus-tut-blocker" id="solus-tut-b-right"></div>
   <div id="solus-tut-ring"></div>
+  <!-- === TUTORIAL SKIP BUTTON (begin) === -->
+  <button id="solus-tut-skip" type="button" aria-label="Skip tutorial" title="Skip tutorial"></button>
+  <!-- === TUTORIAL SKIP BUTTON (end) === -->
   <div id="solus-tut-card" role="dialog" aria-modal="true" aria-label="Setup tutorial">
     <div id="solus-tut-progress" aria-hidden="true"><i></i></div>
     <div class="solus-tut-head">
@@ -3229,6 +3499,15 @@
     }
 
     backBtn.addEventListener('click', function () { if (cur > 0) go(cur - 1); });
+
+    // === TUTORIAL SKIP BUTTON (begin) ===
+    // The invisible bottom-left hotspot ends the tour on tap. finish() writes
+    // the "seen" key and removes #solus-tutorial, taking the button with it,
+    // so the hotspot only exists while the tour is actually running.
+    var skipBtn = document.getElementById('solus-tut-skip');
+    if (skipBtn) skipBtn.addEventListener('click', function () { finish(); });
+    // === TUTORIAL SKIP BUTTON (end) ===
+
     nextBtn.addEventListener('click', function () {
       if (nextBtn.disabled) return;
       if (cur === LAST) finish();
