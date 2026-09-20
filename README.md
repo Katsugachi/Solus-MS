@@ -69,6 +69,7 @@ I thought i would just write some stuff so i can remember when i did what since 
 28/08/26 - added force tutorial<br>
 31/09/26 - Balatro cdn down <br>
 2/09/26 - Balatro fixed, Mods soon <br>
+20/09/26 - New version, added Ink & Brine, fixed remaining Balatro issues, added skip tutorial
 
 ## Details 
 ![GitHub Repo Size](https://img.shields.io/github/repo-size/Katsugachi/Solus-MS) <br>
