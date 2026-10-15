@@ -70,7 +70,8 @@ I thought i would just write some stuff so i can remember when i did what since 
 31/09/26 - Balatro cdn down <br>
 2/09/26 - Balatro fixed, Mods soon <br>
 20/09/26 - New version, added Ink & Brine, fixed remaining Balatro issues, added skip tutorial
-
+21/09/26 - Added Hollow Knight Preview (completed port by Glitch)
+15/10/26 - Hollow knight preview merged into main port
 ## Details 
 ![GitHub Repo Size](https://img.shields.io/github/repo-size/Katsugachi/Solus-MS) <br>
 ![GitHub License](https://img.shields.io/github/license/Katsugachi/Solus-MS) <br>
