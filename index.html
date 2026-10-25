@@ -4,95 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>(function () {
+    // Safety Guardrail Origins
     const ALLOWED_ORIGINS = [
         'https://katsugachi.github.io',
+        'https://katsugachi-github-io.translate.goog',
         'https://solus-ms.pages.dev',
         'https://solus-ms.vercel.app',
         'https://solus-ms.netlify.app',
     ];
 
-    let killed = false;
-    function killTab() {
-        if (killed) return;
-        killed = true;
-        try { window.stop(); } catch (e) {}
-        try { document.documentElement.innerHTML = ''; } catch (e) {}
-        try { window.close(); } catch (e) {}
-        try { if (window.top && window.top !== window) window.top.close(); } catch (e) {}
-        try {
-            window.location.replace('about:blank');
-        } catch (e) {
-            window.location.href = 'about:blank';
-        }
-    }
-
-    window.addEventListener('keydown', function (e) {
-        const k = (e.key || '').toUpperCase();
-        const isDevShortcut =
-            e.key === 'F12' ||
-            ((e.ctrlKey || e.metaKey) && e.shiftKey && (k === 'I' || k === 'J' || k === 'C')) ||
-            (e.metaKey && e.altKey && (k === 'I' || k === 'J' || k === 'C'));
-
-        if (isDevShortcut) {
-            e.preventDefault();
-            e.stopPropagation();
-            killTab();
-        }
-    }, true);
-
-    const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    let prevOuterW = window.outerWidth;
-    let prevOuterH = window.outerHeight;
-    let prevInnerW = window.innerWidth;
-    let prevInnerH = window.innerHeight;
-    let prevDpr = window.devicePixelRatio;
-    let ignoreResizeUntil = 0;
-
-    document.addEventListener('fullscreenchange', function () {
-        ignoreResizeUntil = Date.now() + 700;
-    });
-
-    if (!isMobileUA && window === window.top) {
-        window.addEventListener('resize', function () {
-            if (Date.now() < ignoreResizeUntil || document.fullscreenElement) {
-                prevOuterW = window.outerWidth;
-                prevOuterH = window.outerHeight;
-                prevInnerW = window.innerWidth;
-                prevInnerH = window.innerHeight;
-                prevDpr = window.devicePixelRatio;
-                return;
-            }
-            const outerSame =
-                Math.abs(window.outerWidth - prevOuterW) < 20 &&
-                Math.abs(window.outerHeight - prevOuterH) < 20;
-            const dprSame = window.devicePixelRatio === prevDpr;
-            const innerShrank =
-                (prevInnerW - window.innerWidth) > 180 ||
-                (prevInnerH - window.innerHeight) > 180;
-
-            if (outerSame && dprSame && innerShrank) {
-                killTab();
-                return;
-            }
-            prevOuterW = window.outerWidth;
-            prevOuterH = window.outerHeight;
-            prevInnerW = window.innerWidth;
-            prevInnerH = window.innerHeight;
-            prevDpr = window.devicePixelRatio;
-        });
-    }
-
-    function checkDebugger() {
-        if (document.visibilityState === 'hidden') return;
-        const start = performance.now();
-        debugger;
-        if (performance.now() - start > 120) {
-            killTab();
-        }
-    }
-    setInterval(checkDebugger, 750);
-    checkDebugger();
-
+    // Origin lock only — DevTools remain completely enabled
     if (!ALLOWED_ORIGINS.includes(window.location.origin)) {
         try { window.stop(); } catch (e) {}
 
@@ -175,7 +96,6 @@
         notice.textContent = 'Do Not Deploy Forks of Solus MS To Github Pages';
         body.appendChild(notice);
 
-        // Strip any buffered HTML/scripts if a browser flushes tokens after window.stop()
         const keep = new Set([head, body, notice, ...head.children]);
         new MutationObserver(function (mutations) {
             for (const m of mutations) {
