@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>(function () {
+        <script>(function () {
     // Safety Guardrail Origins
     const ALLOWED_ORIGINS = [
         'https://katsugachi.github.io',
@@ -15,97 +15,50 @@
 
     // Origin lock only — DevTools remain completely enabled
     if (!ALLOWED_ORIGINS.includes(window.location.origin)) {
-        try { window.stop(); } catch (e) {}
-
-        document.documentElement.className = '';
-        document.documentElement.removeAttribute('style');
-
-        const head = document.head || document.createElement('head');
-        head.innerHTML = '';
-
-        const charset = document.createElement('meta');
-        charset.setAttribute('charset', 'UTF-8');
-
-        const viewport = document.createElement('meta');
-        viewport.name = 'viewport';
-        viewport.content = 'width=device-width, initial-scale=1.0';
-
-        const title = document.createElement('title');
-        title.textContent = 'Solus MS';
-
-        const preconnect1 = document.createElement('link');
-        preconnect1.rel = 'preconnect';
-        preconnect1.href = 'https://fonts.googleapis.com';
-
-        const preconnect2 = document.createElement('link');
-        preconnect2.rel = 'preconnect';
-        preconnect2.href = 'https://fonts.gstatic.com';
-        preconnect2.crossOrigin = 'anonymous';
-
-        const font = document.createElement('link');
-        font.rel = 'stylesheet';
-        font.href = 'https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap';
-
-        const style = document.createElement('style');
-        style.textContent = `
-            html, body {
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                background: #ffffff !important;
-                color: #000000 !important;
-                overflow: hidden !important;
-                filter: none !important;
-            }
-            body > *:not(#solus-fork-notice) {
-                display: none !important;
-            }
-            #solus-fork-notice {
-                position: fixed !important;
-                inset: 0 !important;
-                z-index: 2147483647 !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                background: #ffffff !important;
-                color: #000000 !important;
-                font-family: 'Google Sans', sans-serif !important;
-                font-size: clamp(1.2rem, 2.2vw, 1.85rem) !important;
-                font-weight: 500 !important;
-                text-align: center !important;
-                padding: 24px !important;
-                box-sizing: border-box !important;
-                user-select: none !important;
-            }
-        `;
-
-        head.append(charset, viewport, title, preconnect1, preconnect2, font, style);
-        if (!document.head) document.documentElement.prepend(head);
-
-        let body = document.body;
-        if (!body) {
-            body = document.createElement('body');
-            document.documentElement.appendChild(body);
-        } else {
-            body.innerHTML = '';
-        }
-
-        const notice = document.createElement('div');
-        notice.id = 'solus-fork-notice';
-        notice.textContent = 'Do Not Deploy Forks of Solus MS To Github Pages';
-        body.appendChild(notice);
-
-        const keep = new Set([head, body, notice, ...head.children]);
-        new MutationObserver(function (mutations) {
-            for (const m of mutations) {
-                for (const node of m.addedNodes) {
-                    if (!keep.has(node)) {
-                        try { node.remove(); } catch (e) {}
-                    }
-                }
-            }
-        }).observe(document.documentElement, { childList: true, subtree: true });
+        document.write(
+            '<meta name="color-scheme" content="light only">' +
+            '<title>Solus MS</title>' +
+            '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+            '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
+            '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap">' +
+            '<style>' +
+                ':root, html, body {' +
+                    'color-scheme: light only !important;' +
+                    'margin: 0 !important;' +
+                    'padding: 0 !important;' +
+                    'width: 100% !important;' +
+                    'height: 100% !important;' +
+                    'background: #ffffff !important;' +
+                    'color: #000000 !important;' +
+                    'overflow: hidden !important;' +
+                    'filter: none !important;' +
+                '}' +
+                'plaintext { display: none !important; }' +
+                '#solus-fork-notice {' +
+                    'position: fixed !important;' +
+                    'inset: 0 !important;' +
+                    'display: flex !important;' +
+                    'align-items: center !important;' +
+                    'justify-content: center !important;' +
+                    'background: #ffffff !important;' +
+                    'color: #000000 !important;' +
+                    'font-family: "Google Sans", Arial, sans-serif !important;' +
+                    'font-size: clamp(1.2rem, 2.2vw, 1.85rem) !important;' +
+                    'font-weight: 500 !important;' +
+                    'text-align: center !important;' +
+                    'padding: 24px !important;' +
+                    'box-sizing: border-box !important;' +
+                    'user-select: none !important;' +
+                '}' +
+            '</style>' +
+            '</head><body>' +
+            '<div id="solus-fork-notice">Do Not Deploy Forks of Solus MS To Github Pages</div>' +
+            '<plaintext>'
+        );
+        window.addEventListener('DOMContentLoaded', function () {
+            const pt = document.querySelector('plaintext');
+            if (pt) pt.remove();
+        });
     }
 })();</script>
     <meta name="apple-mobile-web-app-capable" content="yes">
