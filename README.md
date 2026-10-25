@@ -72,6 +72,7 @@ I thought i would just write some stuff so i can remember when i did what since 
 21/09/26 - Added Hollow Knight Preview (completed port by Glitch) <br>
 15/10/26 - Hollow knight preview merged into main port <br>
 19/10/26 - Minecraft 26.3 Java updated <br>
+25/10/26 - Solus MS Security Guardrails Implemented <br>
 
 ## Details 
 ![GitHub Repo Size](https://img.shields.io/github/repo-size/Katsugachi/Solus-MS) <br>
