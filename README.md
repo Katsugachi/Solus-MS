@@ -75,7 +75,7 @@ I thought i would just write some stuff so i can remember when i did what since 
 25/10/26 - Solus MS Security Guardrails Implemented <br>
 
 ## Contributing
-If you are genuinely contributing and require deploying the site locally to test the site, add your localhost to the list of allowed origins in index.html. Ensure you remove it before opening a PR.
+If you are genuinely contributing and require deploying the site locally to test the site, add your localhost port to the list of allowed origins in index.html. Ensure you remove it before opening a PR.
 
 ## Details 
 ![GitHub Repo Size](https://img.shields.io/github/repo-size/Katsugachi/Solus-MS) <br>
