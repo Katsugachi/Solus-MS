@@ -3,7 +3,6 @@
 An open source launcher for various programs and games including Hollow Knight, Slope, Minecraft 26.2 etc... <br>
 Written entirely in html (The launcher, not the games)<br>
 Opens games in a new tab, use `fn + f11` to full screen. <br>
-As of right now there are `30` games on Solus MS. <br>
 Credit: bog/aukak and gn-math (bread) for main ports. I made a good few as well :) <br>
 **Scroll For Full Site Explanation & Release Log**
 ## Disclaimer & Terms of Use
@@ -74,7 +73,7 @@ I thought i would just write some stuff so i can remember when i did what since 
 19/10/26 - Minecraft 26.3 Java updated <br>
 25/10/26 - Solus MS Security Guardrails Implemented <br>
 26/10/26 - Slay the Spire + Ink & Brine universal release <br>
-26/1026 - FFVII removed, Cuphead updated, Among Us Patched <br>
+26/10/26 - FFVII removed, Cuphead updated, Among Us Patched <br>
 
 ## Contributing
 If you are contributing and require deploying the site locally to test the site, add your localhost port to the list of allowed origins in index.html. Ensure you remove it before opening a PR! :)
