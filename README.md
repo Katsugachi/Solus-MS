@@ -1,11 +1,11 @@
 # <img src="favicon.ico" height="30" style="vertical-align: -20%;"> &nbsp; Solus-MS 
-
+### For Contributing Scroll
 An open source launcher for various programs and games including Hollow Knight, Slope, Minecraft 26.2 etc... <br>
 Written entirely in html (The launcher, not the games)<br>
 Opens games in a new tab, use `fn + f11` to full screen. <br>
 As of right now there are `30` games on Solus MS. <br>
 Credit: bog/aukak and gn-math (bread) for main ports. I made a good few as well :) <br>
-**Scroll For Full Site Explanation**
+**Scroll For Full Site Explanation & Release Log**
 ## Disclaimer & Terms of Use
 This website is intended for personal entertainment use only. We do not endorse the usage of this site outside of home. Users are entirely responsible for complying with their local institution's policies, rules, and network guidelines (including schools, universities, and workplaces). The creators and hosts of this website accept no liability for any disciplinary actions, restricted access, or consequences resulting from unauthorized use during school or work hours. By continuing to use this site, you agree that you are doing so at your own risk and responsibility. 
 
@@ -59,7 +59,7 @@ Whenever a new feature is added, code is altered or a bug is fixed, the followin
 - Export & Import work for all localstorage<br>
 - All points above pass for mobile edition
 
-## Dev Log & Change Log
+## Dev Log & Change Log + Patch Notes
 I thought i would just write some stuff so i can remember when i did what since recently i've been doing a bunch of work on Solus MS.<br>
 7/04/26 - added search bar, fixed persistent themes so they save now. Stats page added - V 3.0.0<br>
 7/05/26 - Mobile GUI and fixed the autodetect trying to switch the GUI like 50 times a second <br>
@@ -67,15 +67,17 @@ I thought i would just write some stuff so i can remember when i did what since 
 26/06/26 - added deltarune chapter 5<br>
 28/08/26 - added force tutorial<br>
 31/09/26 - Balatro cdn down <br>
-2/09/26 - Balatro fixed, Mods soon <br>
+2/09/26 - Balatro fixed <br>
 20/09/26 - New version, added Ink & Brine, fixed remaining Balatro issues, added skip tutorial <br>
-21/09/26 - Added Hollow Knight Preview (completed port by Glitch) <br>
+21/09/26 - Added Hollow Knight Preview (completed port by Glitch, all credit to Glitch) <br>
 15/10/26 - Hollow knight preview merged into main port <br>
 19/10/26 - Minecraft 26.3 Java updated <br>
 25/10/26 - Solus MS Security Guardrails Implemented <br>
+26/10/26 - Slay the Spire + Ink & Brine universal release <br>
+26/1026 - FFVII removed, Cuphead updated, Among Us Patched <br>
 
 ## Contributing
-If you are genuinely contributing and require deploying the site locally to test the site, add your localhost port to the list of allowed origins in index.html. Ensure you remove it before opening a PR.
+If you are contributing and require deploying the site locally to test the site, add your localhost port to the list of allowed origins in index.html. Ensure you remove it before opening a PR! :)
 
 ## Details 
 ![GitHub Repo Size](https://img.shields.io/github/repo-size/Katsugachi/Solus-MS) <br>
