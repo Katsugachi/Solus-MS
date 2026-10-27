@@ -77,7 +77,8 @@ I thought i would just write some stuff so i can remember when i did what since 
 27/10/26 - Rain World Preview Added, Slay the Spire reverted to preview temporarily until Luke finishes<br>
 
 ## Contributing
-If you are contributing and require deploying the site locally to test the site, add your localhost port to the list of allowed origins in index.html. Ensure you remove it before opening a PR! :)
+If you are contributing and require deploying the site locally to test the site, add your localhost port to the list of allowed origins in index.html. Ensure you remove it before opening a PR! :) <br><br>
+As thanks to contributors and people who help in the community here's a preview key for Solus MS: `previewgameslocked2026%`
 
 ## Details 
 ![GitHub Repo Size](https://img.shields.io/github/repo-size/Katsugachi/Solus-MS) <br>
