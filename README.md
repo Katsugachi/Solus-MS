@@ -76,6 +76,7 @@ I thought i would just write some stuff so i can remember when i did what since 
 26/10/26 - FFVII removed, Cuphead updated, Among Us Patched <br>
 27/10/26 - Rain World Preview Added, Slay the Spire reverted to preview temporarily until Luke finishes<br>
 28/10/26 - OSU deprecated<br>
+29/10/26 - Slay The Spire functional! <br>
 
 
 ## Contributing
