@@ -83,6 +83,10 @@ I thought i would just write some stuff so i can remember when i did what since 
 If you are contributing and require deploying the site locally to test the site, add your localhost port to the list of allowed origins in index.html. Ensure you remove it before opening a PR! :) <br><br>
 As thanks to contributors and people who help in the community here's a preview key for Solus MS: `previewgameslocked2026%`
 
+## Guardrails
+Anti fork pages deployment is natively implemented and you can add your site to the list in index.html to allow fork deployment.<br>
+
+
 ## Details 
 ![GitHub Repo Size](https://img.shields.io/github/repo-size/Katsugachi/Solus-MS) <br>
 ![GitHub License](https://img.shields.io/github/license/Katsugachi/Solus-MS) <br>
