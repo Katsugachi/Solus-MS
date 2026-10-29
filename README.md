@@ -77,6 +77,7 @@ I thought i would just write some stuff so i can remember when i did what since 
 27/10/26 - Rain World Preview Added, Slay the Spire reverted to preview temporarily until Luke finishes<br>
 28/10/26 - OSU deprecated<br>
 29/10/26 - Slay The Spire functional! <br>
+29/10/26 - Slay The Spire maintenance <br>
 
 
 ## Contributing
