@@ -1,6 +1,6 @@
 # <img src="favicon.ico" height="30" style="vertical-align: -20%;"> &nbsp; Solus-MS 
 ### For Contributing Scroll
-An open source actively maintained launcher for various programs and games including Hollow Knight, Slope, Minecraft 26.2 etc... <br>
+An open source actively maintained launcher for various programs and games including Hollow Knight, Slope, Minecraft 26.3 etc... <br>
 Written entirely in html (The launcher, not the games)<br>
 Opens games in a new tab, use `fn + f11` to full screen. <br>
 Credit: bog/aukak and gn-math (bread) for main ports. I made a good few as well :) <br>
