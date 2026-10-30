@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solus MS</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+        #fullscreen-iframe {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Generic wrapper used ONLY when Offline Mode is enabled, for the
+         library entries whose URL points straight at a same-origin game
+         hosted outside /Solus-MS/ (Baldur's Gate 2, Eden Preview). Online it
+         iframes that game exactly like the hand-written wrapper pages do;
+         offline, offline.js replays the mirrored copy. With Offline Mode
+         off the launcher never routes here. -->
+    <iframe id="fullscreen-iframe" allowfullscreen allow="autoplay; fullscreen"></iframe>
+    <script>
+        (function () {
+            var target = null;
+            try { target = new URLSearchParams(window.location.search).get('u'); } catch (e) {}
+            var frame = document.getElementById('fullscreen-iframe');
+            var rootPath = window.location.pathname.replace(/[^/]*$/, '');
+
+            function notice() {
+                frame.src = window.location.origin + rootPath + 'offline.html?reason=game';
+            }
+
+            // Only ever host same-origin games outside this site's scope.
+            // Anything else (missing, cross-origin, or one of our own pages)
+            // falls back to the notice instead of becoming an open relay.
+            var url = null;
+            try { url = target ? new URL(target) : null; } catch (e) {}
+            if (!url || url.origin !== window.location.origin ||
+                (url.protocol !== 'http:' && url.protocol !== 'https:') ||
+                url.pathname.indexOf(rootPath) === 0) {
+                notice();
+                return;
+            }
+
+            window.__solusPlayTarget = url.href;
+
+            // If offline.js fails to arrive for any reason, load the real
+            // game directly - identical to the pre-Offline-Mode behaviour.
+            var fellBack = false;
+            var fallbackTimer = setTimeout(function () {
+                if (!window.SolusOffline && !fellBack) {
+                    fellBack = true;
+                    frame.src = url.href;
+                }
+            }, 2500);
+
+            var script = document.createElement('script');
+            script.src = 'offline.js';
+            script.onload = function () {
+                clearTimeout(fallbackTimer);
+                try {
+                    if (window.SolusOffline && window.SolusOffline.playExternal) {
+                        window.SolusOffline.playExternal(frame, url.href, { setSrcWhenOnline: true });
+                    } else {
+                        frame.src = url.href;
+                    }
+                } catch (e) { frame.src = url.href; }
+            };
+            script.onerror = function () {
+                clearTimeout(fallbackTimer);
+                if (!fellBack) { fellBack = true; frame.src = url.href; }
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
+</body>
+</html>

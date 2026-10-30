@@ -56,6 +56,7 @@ Whenever a new feature is added, code is altered or a bug is fixed, the followin
 - All links in `About` are not broken<br>
 - Search for 3 random games and successfully find them, capitals and non capitalised<br>
 - Export & Import work for all localstorage<br>
+- Offline Mode: enable it, play one CDN game (e.g. Undertale) and one iframed game (e.g. Balatro) online, then go offline and confirm both relaunch and load their saves; turn Offline Mode off and confirm saves/progress are untouched<br>
 - All points above pass for mobile edition
 
 ## Dev Log & Change Log + Patch Notes
@@ -78,6 +79,7 @@ I thought i would just write some stuff so i can remember when i did what since 
 28/10/26 - OSU deprecated<br>
 29/10/26 - Slay The Spire functional! <br>
 29/10/26 - Slay The Spire maintenance <br>
+30/10/26 - Offline Mode added (Settings): optional service worker (`sw.js` + `offline.js`) caches the launcher and every game you play, for faster loads and fully offline play. Games that iframe another katsugachi.github.io site are mirrored while you play them online and replayed from cache offline, with the same origin so saves carry over. Turning it off deletes only the cached game files, never progress. When adding games or cover images, update `SHELL_FILES` in `sw.js` and bump `CACHE_VERSION` <br>
 
 
 ## Contributing
