@@ -1643,7 +1643,7 @@
         <div class="offline-modal-card">
             <h3 id="offline-confirm-title">Enable Offline Mode?</h3>
             <p>Offline Mode saves Solus MS &mdash; and every game you play &mdash; onto this device. Games you have played at least once will then <strong>load much faster</strong> and keep working <strong>with no internet connection</strong>.</p>
-            <p>In exchange, those saved game files <strong>use storage space on this device</strong>. How much depends on how many games you play: small games use a few megabytes, larger ones can use far more.</p>
+            <p>In exchange, those saved game files <strong>use storage space on this device</strong>. How much depends on how many games you play: small games use a few megabytes, larger ones can use far more. Games hosted in their own GitHub Pages repository are saved by downloading that repository's files, and some repositories are very large.</p>
             <p>If you turn Offline Mode off later, all cached game files are removed &mdash; but <strong>your progress, saves and settings are never deleted</strong>. Games will simply need to be cached again the next time you play them online with Offline Mode on.</p>
             <div class="offline-modal-buttons">
                 <button type="button" id="offline-confirm-cancel">Cancel</button>
@@ -1681,22 +1681,27 @@
          unless Offline Mode has been enabled and accepted. -->
     <script src="offline.js"></script>
     <script>
+        // repoPage: for games whose page only iframes a GitHub Pages site,
+        // this is that iframe's URL. Offline Mode reads the repository and
+        // entry document out of it to cache the whole repo locally (see
+        // repo-game.html + offline.js). Keep it in sync with the wrapper
+        // page's iframe src when one changes.
         const staticGames = [
-            { name: "Hollow Knight", cover: "hk.jpg", url: "StrHK.html" },
+            { name: "Hollow Knight", cover: "hk.jpg", url: "StrHK.html", repoPage: "https://katsugachi.github.io/Hollow-Knight-Glitchless/" },
             { name: "Minecraft 26.3 Java", cover: "minecraft.jpg", url: "mc263.html" },
-            { name: "Geometry Dash", cover: "gd.png", url: "gd.html" },
+            { name: "Geometry Dash", cover: "gd.png", url: "gd.html", repoPage: "https://katsugachi.github.io/geometry-dash-fork/" },
             { name: "Undertale", cover: "undertale.png", url: "undertale.html" },
-            { name: "Deltarune", cover: "deltarune.png", url: "deltarune.html" },
+            { name: "Deltarune", cover: "deltarune.png", url: "deltarune.html", repoPage: "https://katsugachi.github.io/deltarune/" },
             { name: "Slay the Spire", cover: "sts.png", url: "sts2.html", preview: true },
          // { name: "Ink & Brine", cover: "ink.png", url: "ink.html", preview: true },
             { name: "Eden Preview", cover: "eden.png", url: "https://katsugachi.github.io/edenwasm29ff92kd-d92/site/tools/eden/index.html", preview: true },
-            { name: "Rain World", cover: "rw.jpg", url: "rw.html" },
-            { name: "Ink & Brine", cover: "ink.png", url: "ink.html" },
-            { name: "Balatro", cover: "balatro.jpg", url: "balatro.html" },
+            { name: "Rain World", cover: "rw.jpg", url: "rw.html", repoPage: "https://katsugachi.github.io/rain-world-backup/rain-world/index.html" },
+            { name: "Ink & Brine", cover: "ink.png", url: "ink.html", repoPage: "https://katsugachi.github.io/Ink-And-Brine/" },
+            { name: "Balatro", cover: "balatro.jpg", url: "balatro.html", repoPage: "https://katsugachi.github.io/Balatro-WASM/balatro/index.html" },
             { name: "Celeste", cover: "celeste.jpg", url: "celeste.html" },
-            { name: "WOIM", cover: "woim.jpg", url: "woim.html" },
+            { name: "WOIM", cover: "woim.jpg", url: "woim.html", repoPage: "https://katsugachi.github.io/Woim-DEMO-Webport/" },
             { name: "OMORI", cover: "omori.png", url: "omori.html" },
-            { name: "Sheepy : A Short Adventure", cover: "sheepy.png", url: "sheepy.html" },
+            { name: "Sheepy : A Short Adventure", cover: "sheepy.png", url: "sheepy.html", repoPage: "https://katsugachi.github.io/Sheepy-A-Short-Adventure/" },
             { name: "Stardew Valley", cover: "stardew.png", url: "stardew.html" },
             { name: "Just Shapes & Beats", cover: "jsab.png", url: "jsab.html" },
             { name: "Level Devil", cover: "leveldevil.png", url: "leveldevil.html" },
@@ -1712,7 +1717,7 @@
             { name: "Legend Of Zelda: Ocarina Of Time", cover: "zelda.png", url: "zelda.html" },
             { name: "Mario Kart DS", cover: "mariods.png", url: "mariods.html" },
             { name: "Binding Of Isaac: Wrath Of The Lamb", cover: "bi.png", url: "bi.html" },
-            { name: "PolyTrack", cover: "pt.jpg", url: "pt.html" },
+            { name: "PolyTrack", cover: "pt.jpg", url: "pt.html", repoPage: "https://katsugachi.github.io/polytrack/" },
 
         ];
 
@@ -1807,12 +1812,34 @@
             return blobUrlCache.get(game.id);
         }
 
+        // Offline Mode: GitHub Pages games are launched through
+        // repo-game.html, which loads the live game online while its whole
+        // repository is cached in the background, and serves the cached
+        // repository's index.html when there is no connection. The Pages
+        // URL comes from the game's repoPage field (the wrapper's iframe
+        // URL), or from the game URL itself for the entries that link
+        // straight to GitHub Pages. Everything else (CDN games, custom
+        // games, and every game while Offline Mode is off) launches
+        // exactly as before.
+        function solusRepoLaunchUrl(game, isCustom) {
+            if (isCustom || !game) return null;
+            try {
+                if (localStorage.getItem('solus_offline') !== 'true' ||
+                    localStorage.getItem('solus_offlineAccepted') !== 'true') return null;
+                const pagesUrl = game.repoPage ||
+                    (/^https:\/\/[a-z0-9-]+\.github\.io\//i.test(String(game.url || '')) ? game.url : null);
+                if (!pagesUrl) return null;
+                return 'repo-game.html?src=' + encodeURIComponent(pagesUrl) +
+                    '&title=' + encodeURIComponent(game.name || '');
+            } catch (e) { return null; }
+        }
+
         function createGameCard(game, isCustom = false) {
             const card = document.createElement('div');
             card.className = 'game-card';
             const safeName = esc(game.name);
             const coverStyle = game.cover ? `background-image: url('${esc(game.cover)}');` : '';
-            let launchUrl = isCustom ? blobUrlFor(game) : game.url;
+            let launchUrl = solusRepoLaunchUrl(game, isCustom) || (isCustom ? blobUrlFor(game) : game.url);
 
             // === PREVIEW GAME: Ink & Brine (begin) ===
             const isPreview = !!game.preview;

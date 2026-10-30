@@ -21,12 +21,18 @@
       stored, so the same game boots fully offline afterwards. These CDN
       URLs are pinned to immutable commits, so cache-first cannot go stale.
 
-   4. Games hosted on other repos / sites and iframed by a page here
+   4. Games hosted on GitHub Pages repos and iframed by a page here
       (e.g. katsugachi.github.io/Balatro-WASM/ inside balatro.html)
-      Same rule as the CDNs: the worker fetches from the repo hosting the
-      game and caches every response that passes through it. Nothing is
-      crawled or pre-downloaded - a game's files are stored simply by
-      playing it once online, exactly as the game itself loads them.
+      Those inner sites are outside this worker's scope, so their traffic
+      never passes through here on its own. Instead, index.html routes
+      them (only while Offline Mode is on) through repo-game.html, and
+      offline.js caches the game's entire repository - identified from
+      the wrapper's iframe URL, listed via the jsDelivr CDN API and
+      downloaded file-by-file from the CDN - under its GitHub Pages URLs
+      in the repo cache. Offline, repo-game.html serves the cached
+      index.html in a frame this worker controls, and every file the game
+      then requests from its GitHub Pages address is answered here from
+      the repository cache. Online the live game is loaded untouched.
 
    Safety rules baked in below:
    - NEVER touches localStorage / IndexedDB: game progress cannot be
@@ -48,8 +54,14 @@
 
 var CACHE_VERSION = 'v1';
 var SHELL_CACHE = 'solus-shell-' + CACHE_VERSION;   // launcher + site files
-var GAMES_CACHE = 'solus-games-' + CACHE_VERSION;   // CDN / game-repo assets
-var ALL_CACHES = [SHELL_CACHE, GAMES_CACHE];
+var GAMES_CACHE = 'solus-games-' + CACHE_VERSION;   // CDN game assets
+var REPO_CACHE = 'solus-repo-' + CACHE_VERSION;     // whole GitHub Pages game repos
+var ALL_CACHES = [SHELL_CACHE, GAMES_CACHE, REPO_CACHE];
+
+// Repository downloads (performed by offline.js, stored under GitHub
+// Pages URLs) carry this query marker; the worker must not intercept
+// them or it would store a second copy under the CDN URL.
+var REPO_FETCH_PARAM = '__solus_repo_fetch';
 
 // Analytics must always hit the real network and is useless offline.
 var NEVER_CACHE_HOSTS = [
@@ -71,6 +83,7 @@ var SHELL_FILES = [
     './',
     'index.html',
     'offline.html',
+    'repo-game.html',
     'offline.js',
     'favicon.ico',
     'Slope.html',
@@ -155,6 +168,10 @@ function scopeUrl(relativePath) {
 
 function isInScope(url) {
     return url.origin === SCOPE_URL.origin && url.pathname.indexOf(SCOPE_PATH) === 0;
+}
+
+function isGithubPagesHost(url) {
+    return /\.github\.io$/i.test(url.hostname);
 }
 
 function isLauncherNavigation(url) {
@@ -341,6 +358,10 @@ self.addEventListener('fetch', function (event) {
 
     if (NEVER_CACHE_HOSTS.indexOf(url.hostname) !== -1) return;
 
+    // Repository downloads by offline.js go straight to the network; it
+    // stores them itself, once, under their GitHub Pages URLs.
+    try { if (url.searchParams.get(REPO_FETCH_PARAM) === '1') return; } catch (e) {}
+
     var waitUntil = function (p) { try { event.waitUntil(p); } catch (e) {} };
 
     try {
@@ -365,11 +386,25 @@ self.addEventListener('fetch', function (event) {
                 // Same-origin game hosted outside this scope (the outer iframe
                 // of a wrapper page). Fetched from the repo hosting the game
                 // and cached like any other game file - network-first so a
-                // pushed update wins; offline falls back to the cached copy,
-                // then to the notice page.
+                // pushed update wins; offline falls back to the cached copy
+                // (including the repository cache), then to the notice page.
                 event.respondWith(
                     fetch(request).then(function (response) {
-                        putInCache(GAMES_CACHE, request, response);
+                        putInCache(isGithubPagesHost(url) ? REPO_CACHE : GAMES_CACHE, request, response);
+                        return response;
+                    }).catch(function () {
+                        return matchAnyCache(request).then(function (hit) {
+                            return hit || offlineFallbackResponse();
+                        });
+                    })
+                );
+            } else if (isGithubPagesHost(url)) {
+                // GitHub Pages game reached from a mirror deployment of the
+                // launcher (or nested inside a cached repo game): same
+                // network-first rule, backed by the repository cache.
+                event.respondWith(
+                    fetch(request).then(function (response) {
+                        putInCache(REPO_CACHE, request, response);
                         return response;
                     }).catch(function () {
                         return matchAnyCache(request).then(function (hit) {
@@ -389,6 +424,7 @@ self.addEventListener('fetch', function (event) {
         }
 
         // ---- subresources ----
+        var externalCache = isGithubPagesHost(url) ? REPO_CACHE : GAMES_CACHE;
         if (isInScope(url)) {
             // Cover images, offline.js and anything else the site ships.
             event.respondWith(
@@ -396,21 +432,23 @@ self.addEventListener('fetch', function (event) {
                     .catch(function () { return fetch(request); })
             );
         } else if (url.origin === SCOPE_URL.origin) {
-            // Files from a same-origin repo outside this scope: fetched from
-            // that repo on a miss and cached like any other game asset.
+            // Files from a repo outside this scope - most importantly the
+            // assets a cached repository game asks for while running in
+            // the controlled repo-game.html frame: served from the
+            // repository cache first, fetched from the repo on a miss.
             event.respondWith(
                 (wantsRevalidate
-                    ? networkRevalidating(request, GAMES_CACHE)
-                    : cacheFirst(request, GAMES_CACHE)
+                    ? networkRevalidating(request, externalCache)
+                    : cacheFirst(request, externalCache)
                 ).catch(function () { return fetch(request); })
             );
         } else {
             // CDN game assets (jsDelivr / githack / raw.githubusercontent /
-            // fonts): immutable, cache-first.
+            // fonts) and cross-origin GitHub Pages files: cache-first.
             event.respondWith(
                 (wantsRevalidate
-                    ? networkRevalidating(request, GAMES_CACHE)
-                    : cacheFirst(request, GAMES_CACHE)
+                    ? networkRevalidating(request, externalCache)
+                    : cacheFirst(request, externalCache)
                 ).catch(function () { return fetch(request); })
             );
         }
@@ -453,7 +491,7 @@ self.addEventListener('install', function (event) {
     // progress reporting) right after registration.
     event.waitUntil(
         caches.open(SHELL_CACHE).then(function (cache) {
-            var core = ['./', 'index.html', 'offline.html', 'offline.js', 'favicon.ico'];
+            var core = ['./', 'index.html', 'offline.html', 'repo-game.html', 'offline.js', 'favicon.ico'];
             return Promise.all(core.map(function (file) {
                 var request = new Request(scopeUrl(file), { cache: 'reload' });
                 return fetch(request).then(function (response) {
