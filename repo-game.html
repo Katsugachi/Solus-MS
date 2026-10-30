@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solus MS</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #repo-game-frame {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Thin, non-interactive download indicator while the game's
+           repository is being saved for offline use in the background. */
+        #repo-cache-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0;
+            max-width: 100%;
+            background: #007bff;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.8);
+            opacity: 0;
+            pointer-events: none;
+            transition: width 0.25s ease, opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        #repo-cache-progress.active {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="repo-cache-progress" aria-hidden="true"></div>
+
+    <!-- Host for games whose wrapper page iframes a GitHub Pages site.
+         Used by index.html only while Offline Mode is on. Online this loads
+         the real GitHub Pages game unchanged while offline.js caches that
+         game's repository files in the background; offline it serves the
+         repository's index.html (and, through the service worker, its
+         files) from Cache Storage. The original wrapper pages are not
+         modified or used on this path. -->
+    <iframe id="repo-game-frame" allowfullscreen allow="autoplay; fullscreen; gamepad; keyboard-lock; pointer-lock"></iframe>
+
+    <script>
+        (function () {
+            var frame = document.getElementById('repo-game-frame');
+            var progress = document.getElementById('repo-cache-progress');
+            var params = new URLSearchParams(window.location.search);
+            var src = params.get('src') || '';
+            var title = params.get('title') || '';
+            var rootPath = window.location.pathname.replace(/[^/]*$/, '');
+            var started = false;
+
+            if (title) document.title = title + ' - Solus MS';
+
+            function isGithubPagesUrl(value) {
+                try {
+                    var url = new URL(value);
+                    return url.protocol === 'https:' && /\.github\.io$/i.test(url.hostname);
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            function showNotice() {
+                frame.src = window.location.origin + rootPath + 'offline.html?reason=game';
+            }
+
+            function loadNormally() {
+                // Exactly what the game's own wrapper page does.
+                frame.src = src;
+            }
+
+            if (!isGithubPagesUrl(src)) {
+                showNotice();
+                return;
+            }
+
+            // If the Offline Mode client cannot load for any reason, fall
+            // back to the normal wrapper behaviour instead of a blank page.
+            var fallbackTimer = setTimeout(function () {
+                if (!started) loadNormally();
+            }, 3000);
+
+            var script = document.createElement('script');
+            script.src = 'offline.js';
+            script.onload = function () {
+                try {
+                    if (window.SolusOffline && window.SolusOffline.playRepoGame) {
+                        started = true;
+                        clearTimeout(fallbackTimer);
+                        window.SolusOffline.playRepoGame({
+                            pagesUrl: src,
+                            iframe: frame,
+                            progressEl: progress,
+                            onFallback: loadNormally
+                        });
+                    } else {
+                        loadNormally();
+                    }
+                } catch (e) {
+                    loadNormally();
+                }
+            };
+            script.onerror = function () {
+                clearTimeout(fallbackTimer);
+                if (!started) loadNormally();
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
+</body>
+</html>

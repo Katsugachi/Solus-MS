@@ -1200,6 +1200,97 @@
             color: #333333;
         }
         /* === PREVIEW GAME: Ink & Brine (end) === */
+
+        /* --- Offline Mode: one-time consent dialog ---
+           Deliberately mirrors the preview-key dialog above (same card,
+           same buttons, same glass/light overrides) so it follows whichever
+           theme is active. Kept as its own classes so removing the preview
+           game can never unstyle it. */
+        #offline-confirm-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(0, 0, 0, 0.6);
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-justify-content: center;
+            justify-content: center;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+
+        #offline-confirm-modal.active {
+            display: -webkit-flex;
+            display: flex;
+        }
+
+        .offline-modal-card {
+            background-color: var(--bg-medium);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 26px 24px;
+            width: 400px;
+            max-width: calc(100vw - 32px);
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .offline-modal-card h3 {
+            margin-bottom: 10px;
+            color: var(--accent-blue);
+            font-size: 1.2rem;
+        }
+
+        .offline-modal-card p {
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            opacity: 0.85;
+            line-height: 1.5;
+        }
+
+        .offline-modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .offline-modal-buttons button {
+            -webkit-flex: 1;
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        #offline-confirm-cancel {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+        }
+
+        #offline-confirm-cancel:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .glass-theme .offline-modal-card {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(40px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .light-theme .offline-modal-card {
+            background-color: #ffffff;
+        }
+
+        #offline-mode-toggle:disabled + .slider {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -1422,6 +1513,25 @@
                     </div>
                 </div>
             </div>
+
+            <div class="settings-group">
+                <h3>Offline Mode</h3>
+                <div class="setting-item">
+                    <div>
+                        <span>Offline Mode</span>
+                        <div style="font-size:0.78rem; opacity:0.55; margin-top:2px;">Save Solus MS and the games you play on this device so they load faster and work with no internet</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="offline-mode-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <span>Saved On This Device</span>
+                    <div id="offline-storage-info" style="font-size:0.85rem; opacity:0.7; text-align:right;">Nothing is cached while Offline Mode is off.</div>
+                </div>
+                <div id="offline-status" style="font-size:0.85rem; opacity:0.85; padding-top:10px; line-height:1.45;"></div>
+            </div>
         </div>
 
         <div id="about-page" style="display: none;">
@@ -1438,7 +1548,7 @@
                     <h3>Version Details</h3>
                     <div class="setting-item">
                         <span>Application Version</span>
-                        <strong>3.2.0 (Eden Preview + Rain World Release)</strong>
+                        <strong>3.3.0 (Offline Mode)</strong>
                     </div>
                     <div class="setting-item">
                       <span>Interface Theme</span>
@@ -1526,6 +1636,22 @@
     </div>
     <!-- === PREVIEW GAME: Ink & Brine (end) === -->
 
+    <!-- Offline Mode one-time consent dialog. Shown the first time Offline
+         Mode is switched on; nothing is cached until the user accepts.
+         Wired up in offline.js. -->
+    <div id="offline-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="offline-confirm-title">
+        <div class="offline-modal-card">
+            <h3 id="offline-confirm-title">Enable Offline Mode?</h3>
+            <p>Offline Mode saves Solus MS &mdash; and every game you play &mdash; onto this device. Games you have played at least once will then <strong>load much faster</strong> and keep working <strong>with no internet connection</strong>.</p>
+            <p>In exchange, those saved game files <strong>use storage space on this device</strong>. How much depends on how many games you play: small games use a few megabytes, larger ones can use far more. Games hosted in their own GitHub Pages repository are saved by downloading that repository's files, and some repositories are very large.</p>
+            <p>If you turn Offline Mode off later, all cached game files are removed &mdash; but <strong>your progress, saves and settings are never deleted</strong>. Games will simply need to be cached again the next time you play them online with Offline Mode on.</p>
+            <div class="offline-modal-buttons">
+                <button type="button" id="offline-confirm-cancel">Cancel</button>
+                <button type="button" class="launch-btn" id="offline-confirm-accept" style="background-color: var(--accent-blue);">Enable Offline Mode</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Mobile bottom nav, must be in DOM before the script runs -->
     <nav class="mobile-nav" id="mobile-nav" aria-label="Main navigation">
         <button class="mobile-nav-item active" id="mnav-library" aria-label="Library">
@@ -1549,24 +1675,33 @@
             About
         </button>
     </nav>
-   
+
+    <!-- Offline Mode client: defines window.SolusOffline before the main
+         script renders game cards, and wires the Settings toggle. Inert
+         unless Offline Mode has been enabled and accepted. -->
+    <script src="offline.js"></script>
     <script>
+        // repoPage: for games whose page only iframes a GitHub Pages site,
+        // this is that iframe's URL. Offline Mode reads the repository and
+        // entry document out of it to cache the whole repo locally (see
+        // repo-game.html + offline.js). Keep it in sync with the wrapper
+        // page's iframe src when one changes.
         const staticGames = [
-            { name: "Hollow Knight", cover: "hk.jpg", url: "StrHK.html" },
+            { name: "Hollow Knight", cover: "hk.jpg", url: "StrHK.html", repoPage: "https://katsugachi.github.io/Hollow-Knight-Glitchless/" },
             { name: "Minecraft 26.3 Java", cover: "minecraft.jpg", url: "mc263.html" },
-            { name: "Geometry Dash", cover: "gd.png", url: "gd.html" },
+            { name: "Geometry Dash", cover: "gd.png", url: "gd.html", repoPage: "https://katsugachi.github.io/geometry-dash-fork/" },
             { name: "Undertale", cover: "undertale.png", url: "undertale.html" },
-            { name: "Deltarune", cover: "deltarune.png", url: "deltarune.html" },
+            { name: "Deltarune", cover: "deltarune.png", url: "deltarune.html", repoPage: "https://katsugachi.github.io/deltarune/" },
             { name: "Slay the Spire", cover: "sts.png", url: "sts2.html", preview: true },
          // { name: "Ink & Brine", cover: "ink.png", url: "ink.html", preview: true },
             { name: "Eden Preview", cover: "eden.png", url: "https://katsugachi.github.io/edenwasm29ff92kd-d92/site/tools/eden/index.html", preview: true },
-            { name: "Rain World", cover: "rw.jpg", url: "rw.html" },
-            { name: "Ink & Brine", cover: "ink.png", url: "ink.html" },
-            { name: "Balatro", cover: "balatro.jpg", url: "balatro.html" },
+            { name: "Rain World", cover: "rw.jpg", url: "rw.html", repoPage: "https://katsugachi.github.io/rain-world-backup/rain-world/index.html" },
+            { name: "Ink & Brine", cover: "ink.png", url: "ink.html", repoPage: "https://katsugachi.github.io/Ink-And-Brine/" },
+            { name: "Balatro", cover: "balatro.jpg", url: "balatro.html", repoPage: "https://katsugachi.github.io/Balatro-WASM/balatro/index.html" },
             { name: "Celeste", cover: "celeste.jpg", url: "celeste.html" },
-            { name: "WOIM", cover: "woim.jpg", url: "woim.html" },
+            { name: "WOIM", cover: "woim.jpg", url: "woim.html", repoPage: "https://katsugachi.github.io/Woim-DEMO-Webport/" },
             { name: "OMORI", cover: "omori.png", url: "omori.html" },
-            { name: "Sheepy : A Short Adventure", cover: "sheepy.png", url: "sheepy.html" },
+            { name: "Sheepy : A Short Adventure", cover: "sheepy.png", url: "sheepy.html", repoPage: "https://katsugachi.github.io/Sheepy-A-Short-Adventure/" },
             { name: "Stardew Valley", cover: "stardew.png", url: "stardew.html" },
             { name: "Just Shapes & Beats", cover: "jsab.png", url: "jsab.html" },
             { name: "Level Devil", cover: "leveldevil.png", url: "leveldevil.html" },
@@ -1582,7 +1717,7 @@
             { name: "Legend Of Zelda: Ocarina Of Time", cover: "zelda.png", url: "zelda.html" },
             { name: "Mario Kart DS", cover: "mariods.png", url: "mariods.html" },
             { name: "Binding Of Isaac: Wrath Of The Lamb", cover: "bi.png", url: "bi.html" },
-            { name: "PolyTrack", cover: "pt.jpg", url: "pt.html" },
+            { name: "PolyTrack", cover: "pt.jpg", url: "pt.html", repoPage: "https://katsugachi.github.io/polytrack/" },
 
         ];
 
@@ -1677,12 +1812,34 @@
             return blobUrlCache.get(game.id);
         }
 
+        // Offline Mode: GitHub Pages games are launched through
+        // repo-game.html, which loads the live game online while its whole
+        // repository is cached in the background, and serves the cached
+        // repository's index.html when there is no connection. The Pages
+        // URL comes from the game's repoPage field (the wrapper's iframe
+        // URL), or from the game URL itself for the entries that link
+        // straight to GitHub Pages. Everything else (CDN games, custom
+        // games, and every game while Offline Mode is off) launches
+        // exactly as before.
+        function solusRepoLaunchUrl(game, isCustom) {
+            if (isCustom || !game) return null;
+            try {
+                if (localStorage.getItem('solus_offline') !== 'true' ||
+                    localStorage.getItem('solus_offlineAccepted') !== 'true') return null;
+                const pagesUrl = game.repoPage ||
+                    (/^https:\/\/[a-z0-9-]+\.github\.io\//i.test(String(game.url || '')) ? game.url : null);
+                if (!pagesUrl) return null;
+                return 'repo-game.html?src=' + encodeURIComponent(pagesUrl) +
+                    '&title=' + encodeURIComponent(game.name || '');
+            } catch (e) { return null; }
+        }
+
         function createGameCard(game, isCustom = false) {
             const card = document.createElement('div');
             card.className = 'game-card';
             const safeName = esc(game.name);
             const coverStyle = game.cover ? `background-image: url('${esc(game.cover)}');` : '';
-            let launchUrl = isCustom ? blobUrlFor(game) : game.url;
+            let launchUrl = solusRepoLaunchUrl(game, isCustom) || (isCustom ? blobUrlFor(game) : game.url);
 
             // === PREVIEW GAME: Ink & Brine (begin) ===
             const isPreview = !!game.preview;
@@ -2364,6 +2521,10 @@
             panicUrl = shownPanicUrl;
 
             applyTheme(localStorage.getItem('solus_theme'));
+
+            // Offline Mode: keep its toggle + service worker in step with
+            // the restored settings (also covers backup imports).
+            if (window.SolusOffline) window.SolusOffline.syncFromStorage();
         }
 
         tabNameInput.oninput = (e) => {

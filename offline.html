@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - Solus MS</title>
+    <link rel="icon" type="image/png" href="favicon.ico">
+    <style>
+        /* Mirrors the launcher's themes (same variables as index.html) so
+           this page never looks like a foreign error screen. Self-contained:
+           it must render with zero network and zero other cached files. */
+        :root {
+            --bg-dark: #1e283a;
+            --bg-medium: #28384d;
+            --text-light: #e0e6ed;
+            --accent-blue: #007bff;
+            --accent-hover: #0060c0;
+            --border-color: #384e68;
+        }
+        body.light-theme {
+            --bg-dark: #f0f2f5;
+            --bg-medium: #ffffff;
+            --text-light: #333333;
+            --border-color: #cccccc;
+        }
+        body.glass-theme {
+            --bg-dark: #050a12;
+            --bg-medium: rgba(15, 23, 42, 0.85);
+            --text-light: #ffffff;
+            --accent-blue: #007aff;
+            --accent-hover: #0a84ff;
+            --border-color: rgba(255, 255, 255, 0.15);
+            background:
+                radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.3) 0, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.2) 0, transparent 50%),
+                #050a12;
+            background-attachment: fixed;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .card {
+            background-color: var(--bg-medium);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px 26px;
+            width: 420px;
+            max-width: calc(100vw - 32px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+            text-align: center;
+        }
+        body.glass-theme .card {
+            backdrop-filter: blur(40px) saturate(200%) brightness(0.9);
+            -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(0.9);
+        }
+        h1 {
+            color: var(--accent-blue);
+            font-size: 1.35rem;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        p {
+            font-size: 0.92rem;
+            line-height: 1.55;
+            opacity: 0.85;
+            margin-bottom: 18px;
+        }
+        .buttons { display: flex; gap: 10px; }
+        .launch-btn {
+            flex: 1;
+            display: block;
+            padding: 10px;
+            background-color: var(--accent-blue);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: bold;
+            font-family: inherit;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+        .launch-btn:hover {
+            background-color: var(--accent-hover);
+            box-shadow: 0 0 10px var(--accent-blue);
+        }
+        .ghost-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            transition: border-color 0.2s;
+        }
+        .ghost-btn:hover { border-color: var(--accent-blue); }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Solus MS</h1>
+        <h2 id="offline-title">You're offline</h2>
+        <p id="offline-message">This page hasn't been saved for offline use yet. Reconnect to the internet and open it once, and Offline Mode will keep it on this device for next time.</p>
+        <div class="buttons">
+            <button type="button" class="ghost-btn" id="offline-retry">Try Again</button>
+            <a class="launch-btn" id="offline-library" href="index.html" target="_top">Back to Library</a>
+        </div>
+    </div>
+    <script>
+        (function () {
+            // Follow the launcher's saved theme.
+            try {
+                var theme = localStorage.getItem('solus_theme');
+                if (theme === 'light') document.body.classList.add('light-theme');
+                else if (theme === 'glass') document.body.classList.add('glass-theme');
+            } catch (e) {}
+
+            // Tailor the wording when a specific game could not be replayed.
+            try {
+                var params = new URLSearchParams(window.location.search);
+                if (params.get('reason') === 'game') {
+                    document.getElementById('offline-title').textContent = "This game isn't available offline yet";
+                    document.getElementById('offline-message').textContent =
+                        'Some games need to be played once while you are online before Offline Mode can save them, and a few games hosted by other sites can only be played with an internet connection. Reconnect and launch this game once, then try again. Your saves and progress are safe either way.';
+                }
+            } catch (e) {}
+
+            // The library link must work from any frame depth and always
+            // resolve inside this site, whatever the deployment path is.
+            try {
+                var root = window.location.pathname.replace(/[^/]*$/, '');
+                document.getElementById('offline-library').href = root + 'index.html';
+            } catch (e) {}
+
+            document.getElementById('offline-retry').addEventListener('click', function () {
+                // Inside a game wrapper, reloading the wrapper re-runs the
+                // whole launch; at top level, reload this page. The tab's
+                // outer document (which may be a written about:blank shell)
+                // is deliberately never reloaded.
+                try {
+                    if (window.parent && window.parent !== window) {
+                        window.parent.location.reload();
+                        return;
+                    }
+                } catch (e) {}
+                window.location.reload();
+            });
+        })();
+    </script>
+</body>
+</html>
