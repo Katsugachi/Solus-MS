@@ -29,10 +29,13 @@
       offline.js caches the game's entire repository - identified from
       the wrapper's iframe URL, listed via the jsDelivr CDN API and
       downloaded file-by-file from the CDN - under its GitHub Pages URLs
-      in the repo cache. Offline, repo-game.html serves the cached
-      index.html in a frame this worker controls, and every file the game
-      then requests from its GitHub Pages address is answered here from
-      the repository cache. Online the live game is loaded untouched.
+      in the repo cache. Offline, repo-game.html loads the game from an
+      in-scope mirror path on this origin (__solus_repo/<owner>/<repo>/...)
+      and this worker answers the mirror's index.html - and every file
+      the game then requests - from the repository cache. The mirror
+      path keeps the document on the site's real origin (a srcdoc frame
+      reports location.origin as "null", which origin-locked webports
+      reject). Online the live game is loaded untouched.
 
    Safety rules baked in below:
    - NEVER touches localStorage / IndexedDB: game progress cannot be
@@ -62,6 +65,15 @@ var ALL_CACHES = [SHELL_CACHE, GAMES_CACHE, REPO_CACHE];
 // Pages URLs) carry this query marker; the worker must not intercept
 // them or it would store a second copy under the CDN URL.
 var REPO_FETCH_PARAM = '__solus_repo_fetch';
+
+// Offline GitHub Pages games run from this in-scope mirror prefix:
+//   <scope>__solus_repo/<owner>/<repo>/<path inside the repo>
+// The mirror document has this site's real origin (a srcdoc document
+// reports location.origin as "null", which makes origin-locked
+// webports refuse to start), and because the path is inside this
+// worker's scope every file the game requests through the mirror can
+// be answered from the repository cache by the proxy handler below.
+var REPO_PROXY_PREFIX = '__solus_repo/';
 
 // Analytics must always hit the real network and is useless offline.
 var NEVER_CACHE_HOSTS = [
@@ -218,6 +230,211 @@ function matchAnyCache(request) {
     });
 }
 
+/* ---------- GitHub Pages repo mirror (offline repo games) ---------- */
+
+function decodePathSegment(segment) {
+    try { return decodeURIComponent(segment); } catch (e) { return segment; }
+}
+
+function encodeRepoPathSegments(segments) {
+    return segments.map(function (segment) {
+        return encodeURIComponent(segment);
+    }).join('/');
+}
+
+// Parse <scope>__solus_repo/<owner>/<repo>/<path> into the GitHub Pages
+// URL(s) the mirror request stands for. Directory (and extensionless)
+// paths also get an index.html candidate.
+function parseRepoProxyUrl(url) {
+    if (!isInScope(url)) return null;
+    var rest = url.pathname.slice(SCOPE_PATH.length);
+    if (rest.indexOf(REPO_PROXY_PREFIX) !== 0) return null;
+
+    var rawParts = rest.slice(REPO_PROXY_PREFIX.length).split('/');
+    if (rawParts.length < 2) return null;
+    var owner = decodePathSegment(rawParts[0]).toLowerCase();
+    var repo = decodePathSegment(rawParts[1]);
+    if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(owner)) return null;
+    if (!repo || repo === '.' || repo === '..' ||
+        repo.indexOf('/') !== -1 || repo.indexOf('\\') !== -1) return null;
+
+    var pathSegments = rawParts.slice(2).map(decodePathSegment)
+        .filter(function (segment) { return segment.length; });
+    for (var i = 0; i < pathSegments.length; i++) {
+        if (pathSegments[i] === '.' || pathSegments[i] === '..') return null;
+    }
+
+    var isUserSite = repo.toLowerCase() === owner + '.github.io';
+    var repoBaseUrl = 'https://' + owner + '.github.io' +
+        (isUserSite ? '' : '/' + encodeURIComponent(repo)) + '/';
+
+    function candidate(fileSegments, dirSegments) {
+        return {
+            url: repoBaseUrl + encodeRepoPathSegments(fileSegments),
+            mirrorBaseUrl: scopeUrl(
+                REPO_PROXY_PREFIX + encodeURIComponent(owner) + '/' +
+                encodeURIComponent(repo) + '/' +
+                (dirSegments.length ? encodeRepoPathSegments(dirSegments) + '/' : '')
+            )
+        };
+    }
+
+    var candidates;
+    var last = pathSegments[pathSegments.length - 1] || '';
+    if (!pathSegments.length || /\/$/.test(url.pathname)) {
+        candidates = [candidate(pathSegments.concat(['index.html']), pathSegments)];
+    } else if (/\.[a-z0-9]+$/i.test(last)) {
+        candidates = [candidate(pathSegments, pathSegments.slice(0, -1))];
+    } else {
+        candidates = [
+            candidate(pathSegments, pathSegments.slice(0, -1)),
+            candidate(pathSegments.concat(['index.html']), pathSegments)
+        ];
+    }
+
+    return { owner: owner, repo: repo, candidates: candidates };
+}
+
+function matchRepoCache(targetUrl) {
+    return caches.open(REPO_CACHE).then(function (cache) {
+        return cache.match(targetUrl).then(function (hit) {
+            return hit || cache.match(targetUrl, { ignoreSearch: true });
+        });
+    }).then(function (hit) {
+        return hit || caches.match(targetUrl, { ignoreSearch: true });
+    }).catch(function () { return undefined; });
+}
+
+// Games routinely probe for optional files (alternate audio formats,
+// optional configs) and proceed on an HTTP 404 - but hang forever on a
+// network error, which is what a plain failed fetch produces offline.
+// Answering "not in the cached repo" with a real 404 keeps those
+// loaders moving exactly as they do against the live site.
+function repoNotFoundResponse() {
+    return new Response('Not found', {
+        status: 404,
+        headers: {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Cache-Control': 'no-store'
+        }
+    });
+}
+
+// Point the served document's relative URLs at its mirror folder, so
+// scripts, workers, imports and sibling navigations all stay inside
+// the mirror (and therefore inside this worker's control).
+function injectRepoBase(html, baseUrl) {
+    if (/<base\s[^>]*href\s*=/i.test(html)) return html;
+    var tag = '<base href="' + String(baseUrl).replace(/"/g, '%22') + '">';
+    if (/<head[^>]*>/i.test(html)) {
+        return html.replace(/<head[^>]*>/i, function (m) { return m + tag; });
+    }
+    return tag + html;
+}
+
+function isRepoHtmlResponse(request, targetUrl, response) {
+    if (request.mode === 'navigate') return true;
+    try {
+        var type = response.headers.get('Content-Type') || '';
+        if (/text\/html/i.test(type)) return true;
+    } catch (e) {}
+    return /\.html?$/i.test(targetUrl);
+}
+
+// Cached GitHub Pages files were stored from cross-origin CORS fetches,
+// so their response type is "cors". Chromium refuses to serve a "cors"
+// response to same-origin requests such as dedicated Worker scripts
+// (the game's physics worker then never starts). Re-wrapping the body
+// yields a plain response that every request mode accepts.
+function repoPlainResponse(response) {
+    if (!response || response.type === 'opaque') return Promise.resolve(response);
+    return response.clone().arrayBuffer().then(function (buffer) {
+        var headers = new Headers();
+        ['Content-Type', 'ETag', 'Last-Modified', 'Cache-Control'].forEach(function (name) {
+            var value = response.headers.get(name);
+            if (value) headers.set(name, value);
+        });
+        return new Response(buffer, { status: response.status || 200, headers: headers });
+    }).catch(function () { return response; });
+}
+
+function repoProxyHtmlResponse(response, mirrorBaseUrl) {
+    if (!response || response.type === 'opaque') return Promise.resolve(response);
+    return response.clone().text().then(function (html) {
+        // Clean headers: the stored response may carry CDN framing/CSP
+        // headers that must not apply to the mirror document.
+        return new Response(injectRepoBase(html, mirrorBaseUrl), {
+            status: 200,
+            headers: {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Cache-Control': 'no-store'
+            }
+        });
+    }).catch(function () { return response; });
+}
+
+function fetchRepoProxyCandidate(request, info, index) {
+    if (index >= info.candidates.length) return Promise.resolve(null);
+    var candidate = info.candidates[index];
+    return matchRepoCache(candidate.url).then(function (hit) {
+        if (hit) return { response: hit, candidate: candidate };
+        return fetch(candidate.url, { credentials: 'omit', redirect: 'follow' })
+            .then(function (response) {
+                if (!response.ok && index + 1 < info.candidates.length) {
+                    return fetchRepoProxyCandidate(request, info, index + 1);
+                }
+                putInCache(REPO_CACHE, candidate.url, response);
+                return { response: response, candidate: candidate };
+            })
+            .catch(function () {
+                return fetchRepoProxyCandidate(request, info, index + 1);
+            });
+    });
+}
+
+function handleRepoProxyRequest(request, info) {
+    var rangeHeader = request.headers.get('Range');
+    if (rangeHeader) {
+        var findCached = function (index) {
+            if (index >= info.candidates.length) return Promise.resolve(null);
+            return matchRepoCache(info.candidates[index].url).then(function (hit) {
+                return hit ? info.candidates[index] : findCached(index + 1);
+            });
+        };
+        return findCached(0).then(function (candidate) {
+            if (candidate) {
+                return handleRangeRequest(new Request(candidate.url, {
+                    headers: { 'Range': rangeHeader }
+                })).catch(function () { return repoNotFoundResponse(); });
+            }
+            return fetch(info.candidates[0].url, {
+                credentials: 'omit',
+                headers: { 'Range': rangeHeader }
+            }).catch(function () { return repoNotFoundResponse(); });
+        }).catch(function () { return repoNotFoundResponse(); });
+    }
+
+    return fetchRepoProxyCandidate(request, info, 0).then(function (found) {
+        if (!found) {
+            return request.mode === 'navigate'
+                ? offlineFallbackResponse()
+                : repoNotFoundResponse();
+        }
+        var response = found.response;
+        if (request.mode === 'navigate' && (!response.ok || response.type === 'opaque')) {
+            return offlineFallbackResponse();
+        }
+        if (isRepoHtmlResponse(request, found.candidate.url, response)) {
+            return repoProxyHtmlResponse(response, found.candidate.mirrorBaseUrl);
+        }
+        return repoPlainResponse(response);
+    }).catch(function () {
+        return request.mode === 'navigate'
+            ? offlineFallbackResponse()
+            : repoNotFoundResponse();
+    });
+}
+
 function offlineFallbackResponse() {
     return caches.match(scopeUrl('offline.html')).then(function (hit) {
         if (hit) return hit;
@@ -365,8 +582,22 @@ self.addEventListener('fetch', function (event) {
     var waitUntil = function (p) { try { event.waitUntil(p); } catch (e) {} };
 
     try {
+        // Offline GitHub Pages repo games run under the in-scope mirror
+        // prefix; those requests map to the repository cache.
+        var repoProxy = parseRepoProxyUrl(url);
+        if (repoProxy) {
+            event.respondWith(handleRepoProxyRequest(request, repoProxy));
+            return;
+        }
+
         if (request.headers.get('Range')) {
-            event.respondWith(handleRangeRequest(request));
+            var rangePromise = handleRangeRequest(request);
+            if (isGithubPagesHost(url)) {
+                rangePromise = rangePromise.catch(function () {
+                    return repoNotFoundResponse();
+                });
+            }
+            event.respondWith(rangePromise);
             return;
         }
 
@@ -440,7 +671,11 @@ self.addEventListener('fetch', function (event) {
                 (wantsRevalidate
                     ? networkRevalidating(request, externalCache)
                     : cacheFirst(request, externalCache)
-                ).catch(function () { return fetch(request); })
+                ).catch(function () {
+                    return isGithubPagesHost(url)
+                        ? repoNotFoundResponse()
+                        : fetch(request);
+                })
             );
         } else {
             // CDN game assets (jsDelivr / githack / raw.githubusercontent /
@@ -449,7 +684,11 @@ self.addEventListener('fetch', function (event) {
                 (wantsRevalidate
                     ? networkRevalidating(request, externalCache)
                     : cacheFirst(request, externalCache)
-                ).catch(function () { return fetch(request); })
+                ).catch(function () {
+                    return isGithubPagesHost(url)
+                        ? repoNotFoundResponse()
+                        : fetch(request);
+                })
             );
         }
     } catch (err) {

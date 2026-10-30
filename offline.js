@@ -91,10 +91,39 @@
 
     /* ---------------- service worker management ---------------- */
 
+    function waitForWorkerActive(worker) {
+        if (!worker || worker.state === 'activated') return Promise.resolve();
+        return new Promise(function (resolve) {
+            var done = false;
+            var finish = function () {
+                if (!done) { done = true; resolve(); }
+            };
+            try {
+                worker.addEventListener('statechange', function () {
+                    if (worker.state === 'activated' || worker.state === 'redundant') finish();
+                });
+            } catch (e) { finish(); }
+            setTimeout(finish, 5000);
+        });
+    }
+
     function registerSW() {
         if (!swSupported()) return Promise.reject(new Error('Service workers are not available in this browser or context.'));
         return navigator.serviceWorker.register(siteFile('sw.js'))
-            .then(function () { return navigator.serviceWorker.ready; });
+            .then(function (registration) {
+                // Explicitly look for a newer worker so page and worker
+                // behavior roll out together instead of waiting for the
+                // browser's throttled (up to 24h) background update check.
+                var updated = (registration && registration.update)
+                    ? registration.update().catch(function () { return null; })
+                    : Promise.resolve(null);
+                return updated.then(function () {
+                    var candidate = registration && (registration.installing || registration.waiting);
+                    return waitForWorkerActive(candidate);
+                }).then(function () {
+                    return navigator.serviceWorker.ready;
+                });
+            });
     }
 
     function unregisterSW() {
@@ -543,36 +572,43 @@
         }).catch(function () { return { ok: false, reason: 'error' }; });
     }
 
-    // Point the served document's relative URLs back at its real GitHub
-    // Pages folder, so every file it asks for is answered by name from
-    // the repository cache (through the service worker).
-    function injectRepoBase(html, info) {
-        if (/<base\s[^>]*href\s*=/i.test(html)) return html;
-        var tag = '<base href="' + info.dirUrl.replace(/"/g, '%22') + '">';
-        if (/<head[^>]*>/i.test(html)) {
-            return html.replace(/<head[^>]*>/i, function (m) { return m + tag; });
-        }
-        return tag + html;
-    }
-
-    function getCachedRepoIndex(info) {
-        if (!('caches' in window)) return Promise.resolve(null);
+    function hasCachedRepoIndex(info) {
+        if (!('caches' in window)) return Promise.resolve(false);
         return caches.open(REPO_CACHE)
             .then(function (cache) { return cache.match(info.indexUrl); })
             .then(function (hit) { return hit || caches.match(info.indexUrl); })
-            .then(function (hit) {
-                if (!hit) return null;
-                return hit.text().then(function (text) { return text || null; });
-            })
-            .catch(function () { return null; });
+            .then(function (hit) { return !!hit; })
+            .catch(function () { return false; });
+    }
+
+    // Offline repo games are loaded from a same-origin, in-scope mirror
+    // path (handled by sw.js) instead of srcdoc. That gives the game
+    // document the site's real origin - srcdoc documents report
+    // location.origin as "null", which makes origin-locked webports
+    // refuse to start - while keeping every mirror request under the
+    // service worker's control so it can be answered from the repo cache.
+    var REPO_PROXY_PREFIX = '__solus_repo/';
+
+    function repoProxyUrl(info) {
+        var suffix = '';
+        try {
+            var input = new URL(info.input);
+            suffix = input.search + input.hash;
+        } catch (e) {}
+        return siteFile(
+            REPO_PROXY_PREFIX +
+            encodeURIComponent(info.owner) + '/' +
+            encodeURIComponent(info.repo) + '/' +
+            encodeRepoPath(info.indexPath)
+        ) + suffix;
     }
 
     /**
      * Player used by repo-game.html for GitHub Pages games.
      *  online  -> load the real game untouched; cache its repo behind it
-     *  offline -> serve the cached repo index.html in a frame the service
-     *             worker controls, so all of the game's files resolve to
-     *             the local repository cache
+     *  offline -> load the cached repo through the service worker's
+     *             in-scope mirror path, so the game's index.html and all
+     *             of its files resolve to the local repository cache
      */
     function playRepoGame(options) {
         options = options || {};
@@ -623,14 +659,13 @@
         }
 
         return registerSW().catch(function () { return null; })
-            .then(function () { return getCachedRepoIndex(info); })
-            .then(function (html) {
-                if (html) {
-                    iframe.removeAttribute('src');
-                    iframe.srcdoc = injectRepoBase(html, info);
+            .then(function () { return hasCachedRepoIndex(info); })
+            .then(function (cached) {
+                iframe.removeAttribute('srcdoc');
+                if (cached) {
+                    iframe.src = repoProxyUrl(info);
                     return true;
                 }
-                iframe.removeAttribute('srcdoc');
                 iframe.src = siteFile('offline.html') + '?reason=game';
                 return false;
             })
@@ -811,7 +846,8 @@
             sitePath: sitePath,
             parseGithubPagesUrl: parseGithubPagesUrl,
             extractListingFiles: extractListingFiles,
-            injectRepoBase: injectRepoBase,
+            repoProxyUrl: repoProxyUrl,
+            hasCachedRepoIndex: hasCachedRepoIndex,
             orderRepoFiles: orderRepoFiles,
             listingFingerprint: listingFingerprint,
             cacheRepo: cacheRepo
