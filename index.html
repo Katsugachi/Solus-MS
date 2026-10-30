@@ -1813,10 +1813,6 @@
             const safeName = esc(game.name);
             const coverStyle = game.cover ? `background-image: url('${esc(game.cover)}');` : '';
             let launchUrl = isCustom ? blobUrlFor(game) : game.url;
-            // Offline Mode: same-origin games linked by absolute URL get a
-            // wrapper page so they can be mirrored/replayed offline. Returns
-            // launchUrl unchanged whenever Offline Mode is off.
-            if (window.SolusOffline) launchUrl = window.SolusOffline.rewriteLaunchUrl(launchUrl, isCustom);
 
             // === PREVIEW GAME: Ink & Brine (begin) ===
             const isPreview = !!game.preview;

@@ -21,13 +21,12 @@
       stored, so the same game boots fully offline afterwards. These CDN
       URLs are pinned to immutable commits, so cache-first cannot go stale.
 
-   4. Games that live on the SAME origin but OUTSIDE this scope
-      (e.g. katsugachi.github.io/Balatro-WASM/ iframed by balatro.html)
-      A service worker can never control pages outside its own scope, so
-      offline.js mirrors those games into the "mirror" cache while you play
-      them online and replays them through a controlled frame when offline.
-      This worker serves those mirrored files (cache-first) and keeps the
-      mirror fresh by storing successful network responses it sees.
+   4. Games hosted on other repos / sites and iframed by a page here
+      (e.g. katsugachi.github.io/Balatro-WASM/ inside balatro.html)
+      Same rule as the CDNs: the worker fetches from the repo hosting the
+      game and caches every response that passes through it. Nothing is
+      crawled or pre-downloaded - a game's files are stored simply by
+      playing it once online, exactly as the game itself loads them.
 
    Safety rules baked in below:
    - NEVER touches localStorage / IndexedDB: game progress cannot be
@@ -49,9 +48,8 @@
 
 var CACHE_VERSION = 'v1';
 var SHELL_CACHE = 'solus-shell-' + CACHE_VERSION;   // launcher + site files
-var GAMES_CACHE = 'solus-games-' + CACHE_VERSION;   // CDN game assets
-var MIRROR_CACHE = 'solus-mirror-' + CACHE_VERSION; // same-origin iframed games
-var ALL_CACHES = [SHELL_CACHE, GAMES_CACHE, MIRROR_CACHE];
+var GAMES_CACHE = 'solus-games-' + CACHE_VERSION;   // CDN / game-repo assets
+var ALL_CACHES = [SHELL_CACHE, GAMES_CACHE];
 
 // Analytics must always hit the real network and is useless offline.
 var NEVER_CACHE_HOSTS = [
@@ -73,7 +71,6 @@ var SHELL_FILES = [
     './',
     'index.html',
     'offline.html',
-    'offline-play.html',
     'offline.js',
     'favicon.ico',
     'Slope.html',
@@ -267,9 +264,9 @@ function cacheFirst(request, cacheName) {
     });
 }
 
-// Requests that explicitly demand revalidation (offline.js sends these when
-// refreshing a mirrored game's entry files) skip the cache read but still
-// update the stored copy.
+// Requests that explicitly demand revalidation (a game's own no-cache
+// reload of its entry files) skip the cache read but still update the
+// stored copy.
 function networkRevalidating(request, cacheName) {
     return fetch(request).then(function (response) {
         putInCache(cacheName, request, response);
@@ -366,13 +363,13 @@ self.addEventListener('fetch', function (event) {
                 );
             } else if (url.origin === SCOPE_URL.origin) {
                 // Same-origin game hosted outside this scope (the outer iframe
-                // of a wrapper page). Network-first; keep the mirror's copy of
-                // the entry document fresh; offline falls back to the mirror,
-                // then to the notice. (The full offline replay is driven by
-                // offline.js in the wrapper page - see its header comment.)
+                // of a wrapper page). Fetched from the repo hosting the game
+                // and cached like any other game file - network-first so a
+                // pushed update wins; offline falls back to the cached copy,
+                // then to the notice page.
                 event.respondWith(
                     fetch(request).then(function (response) {
-                        putInCache(MIRROR_CACHE, request, response);
+                        putInCache(GAMES_CACHE, request, response);
                         return response;
                     }).catch(function () {
                         return matchAnyCache(request).then(function (hit) {
@@ -399,12 +396,12 @@ self.addEventListener('fetch', function (event) {
                     .catch(function () { return fetch(request); })
             );
         } else if (url.origin === SCOPE_URL.origin) {
-            // Files of a mirrored game, requested by the offline replay frame
-            // (or by the mirroring crawl in offline.js).
+            // Files from a same-origin repo outside this scope: fetched from
+            // that repo on a miss and cached like any other game asset.
             event.respondWith(
                 (wantsRevalidate
-                    ? networkRevalidating(request, MIRROR_CACHE)
-                    : cacheFirst(request, MIRROR_CACHE)
+                    ? networkRevalidating(request, GAMES_CACHE)
+                    : cacheFirst(request, GAMES_CACHE)
                 ).catch(function () { return fetch(request); })
             );
         } else {
@@ -456,7 +453,7 @@ self.addEventListener('install', function (event) {
     // progress reporting) right after registration.
     event.waitUntil(
         caches.open(SHELL_CACHE).then(function (cache) {
-            var core = ['./', 'index.html', 'offline.html', 'offline-play.html', 'offline.js', 'favicon.ico'];
+            var core = ['./', 'index.html', 'offline.html', 'offline.js', 'favicon.ico'];
             return Promise.all(core.map(function (file) {
                 var request = new Request(scopeUrl(file), { cache: 'reload' });
                 return fetch(request).then(function (response) {
