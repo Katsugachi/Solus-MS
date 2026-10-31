@@ -78,6 +78,8 @@ I thought i would just write some stuff so i can remember when i did what since 
 28/10/26 - OSU deprecated<br>
 29/10/26 - Slay The Spire functional! <br>
 29/10/26 - Slay The Spire maintenance <br>
+31/10/26 - Binding of Isaac Deprecation <br>
+
 
 
 ## Contributing
