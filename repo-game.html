@@ -67,6 +67,17 @@
 
             if (title) document.title = title + ' - Solus MS';
 
+            // Closing or reloading while the repository is still downloading
+            // leaves the offline copy incomplete. Warn first; the copy is
+            // finished on the next launch.
+            window.addEventListener('beforeunload', function (e) {
+                if (progress && progress.classList.contains('active')) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                    return '';
+                }
+            });
+
             function isGithubPagesUrl(value) {
                 try {
                     var url = new URL(value);

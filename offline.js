@@ -274,8 +274,23 @@
         } catch (e) { return urlHref; }
     }
 
+    // A listing or file request that stalls without failing would leave the
+    // game blank forever, so give up on a response that has not started
+    // within REPO_HEADER_TIMEOUT_MS. The body is not timed, so large files
+    // still download in full.
+    var REPO_HEADER_TIMEOUT_MS = 20000;
     function repoFetch(urlHref) {
-        return fetch(withRepoFetchMarker(urlHref), { credentials: 'omit', cache: 'no-store' });
+        var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        var timer = controller ? setTimeout(function () { controller.abort(); }, REPO_HEADER_TIMEOUT_MS) : null;
+        var init = { credentials: 'omit', cache: 'no-store' };
+        if (controller) init.signal = controller.signal;
+        return fetch(withRepoFetchMarker(urlHref), init).then(function (response) {
+            if (timer) clearTimeout(timer);
+            return response;
+        }, function (err) {
+            if (timer) clearTimeout(timer);
+            throw err;
+        });
     }
 
     function normalizeRepoPath(name) {
