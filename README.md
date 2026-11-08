@@ -79,6 +79,8 @@ I thought i would just write some stuff so i can remember when i did what since 
 31/10/26 - Eden Preview period ended <br>
 31/10/26 - Binding of Isaac Repentance+ added in preview <br>
 4/11/26 - Binding of Isaac Repentance+ universal release <br>
+8/11/26 - Ocarina of Time removed <br>
+8/11/26 - Meccha Chameleon added in universal release <br>
 
 
 
