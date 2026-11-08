@@ -81,6 +81,7 @@ I thought i would just write some stuff so i can remember when i did what since 
 4/11/26 - Binding of Isaac Repentance+ universal release <br>
 8/11/26 - Ocarina of Time removed <br>
 8/11/26 - Meccha Chameleon added in universal release <br>
+8/11/26 - Slay The Spire preview re-release <br>
 
 
 
