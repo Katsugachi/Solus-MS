@@ -4,8 +4,8 @@
 //
 // Games fall into two categories, both detected from the URL alone so new
 // games are picked up automatically:
-//   1. Mirrored pages - a launcher .html that iframes a page on one of
-//      MIRROR_HOSTS (e.g. https://katsugachi.github.io/<repo>/). A worker can
+//   1. Mirrored pages - a launcher .html that iframes a page under one of
+//      MIRROR_ORIGINS (e.g. https://katsugachi.github.io/<repo>/). A worker can
 //      only control pages inside its own scope, so the iframe src is rewritten
 //      to <scope>__mirror/<host>/<path> and this worker fetches the real page
 //      and serves it from there, caching everything it loads.
@@ -20,7 +20,9 @@ const GAME_CACHE = 'solus-games-' + CACHE_VERSION;
 const SCOPE = self.registration.scope;
 const SCOPE_URL = new URL(SCOPE);
 const MIRROR_PREFIX = SCOPE + '__mirror/';
-const MIRROR_HOSTS = ['katsugachi.github.io'];
+// Only trusted, first-party prefixes may be mirrored: mirrored pages run
+// with this site's origin, so they can read its saves and settings
+const MIRROR_ORIGINS = ['https://katsugachi.github.io/', 'https://raw.githack.com/Katsugachi/'];
 
 // Hosts that only serve static, versioned files: always cache-first
 const STATIC_HOSTS = [
@@ -128,6 +130,10 @@ function isStatic(url) {
     return last.includes('.') && !DYNAMIC_EXT.test(last);
 }
 
+function isMirrorable(href) {
+    return MIRROR_ORIGINS.some(p => href.startsWith(p));
+}
+
 function toMirror(href) {
     const u = new URL(href);
     return MIRROR_PREFIX + u.host + u.pathname + u.search + u.hash;
@@ -145,6 +151,9 @@ function cacheable(res) {
 
 async function putSafe(cacheName, key, res) {
     try {
+        // Offline Mode being turned off deletes the caches before the worker
+        // unregisters; pages it still controls must not recreate them
+        if (!(await caches.has(SITE_CACHE))) return;
         const cache = await caches.open(cacheName);
         await cache.put(key, res);
     } catch (e) {
@@ -242,7 +251,7 @@ async function rewriteDocument(res) {
     const out = html.replace(/(<iframe\b[^>]*?\bsrc\s*=\s*)(["'])(https?:\/\/[^"']+)\2/gi, (m, pre, q, src) => {
         try {
             const u = new URL(src);
-            if (!MIRROR_HOSTS.includes(u.hostname) || u.href.startsWith(SCOPE)) return m;
+            if (!isMirrorable(u.href) || u.href.startsWith(SCOPE)) return m;
             return pre + q + toMirror(u.href) + q;
         } catch (e) { return m; }
     });
@@ -261,6 +270,7 @@ function cleanHeaders(headers) {
 
 async function handleMirror(req, url, keep) {
     const upstream = fromMirror(url.href);
+    if (!isMirrorable(upstream)) return new Response('Not found', { status: 404 });
     const upstreamUrl = new URL(upstream);
     const sameOrigin = upstreamUrl.origin === self.location.origin;
     const mode = sameOrigin ? 'same-origin' : 'cors';
@@ -316,7 +326,9 @@ async function handleHead(req, key, fetcher) {
     } catch (e) {
         const hit = await caches.match(key, { ignoreVary: true });
         if (hit && hit.type !== 'opaque') return new Response(null, { status: hit.status, headers: hit.headers });
-        return Response.error();
+        // Games probe for optional files with HEAD (e.g. split .data chunks);
+        // anything never cached is reported missing rather than a network error
+        return new Response(null, { status: 404, statusText: 'Not Found (offline)' });
     }
 }
 

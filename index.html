@@ -1707,7 +1707,7 @@
             card.className = 'game-card';
             const safeName = esc(game.name);
             const coverStyle = game.cover ? `background-image: url('${esc(game.cover)}');` : '';
-            let launchUrl = isCustom ? blobUrlFor(game) : game.url;
+            let launchUrl = isCustom ? blobUrlFor(game) : offlineLaunchUrl(game.url);
 
             // === PREVIEW GAME: Ink & Brine (begin) ===
             const isPreview = !!game.preview;
@@ -2498,6 +2498,15 @@
             await clearOfflineCache();
             syncOfflineMode();
         };
+
+        // Games linked straight to a mirrorable page (see MIRROR_ORIGINS in
+        // sw.js) open through the worker's mirror so they get cached too
+        function offlineLaunchUrl(url) {
+            if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return url;
+            if (!['https://katsugachi.github.io/', 'https://raw.githack.com/Katsugachi/'].some(p => url.startsWith(p))) return url;
+            const u = new URL(url);
+            return new URL('__mirror/' + u.host + u.pathname + u.search + u.hash, location.href).href;
+        }
 
         async function clearOfflineCache() {
             if (!('caches' in window)) return;
