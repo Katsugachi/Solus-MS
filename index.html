@@ -1422,6 +1422,31 @@
                     </div>
                 </div>
             </div>
+
+            <div class="settings-group" id="offline-settings-group">
+                <h3>Offline Mode</h3>
+                <div class="setting-item">
+                    <div>
+                        <span>Enable Offline Mode</span>
+                        <div style="font-size:0.78rem; opacity:0.55; margin-top:2px;">Caches the site and every game you open so they load faster and work without internet</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="offline-mode-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div>
+                        <span>Cached Data</span>
+                        <div id="offline-usage" style="font-size:0.78rem; opacity:0.55; margin-top:2px;">Offline Mode is off</div>
+                    </div>
+                    <button class="launch-btn" id="offline-clear-btn" style="width:160px; padding:8px; flex-shrink:0;">Clear Cache</button>
+                </div>
+                <p id="offline-note" style="font-size:0.85rem; opacity:0.7; margin-top:12px; line-height:1.45;">
+                    Note: caching games can take anywhere from 0-4GB of storage on this device, depending on how many games you open.
+                    In return, games load faster and any game you have already opened with Offline Mode on can be played offline.
+                </p>
+            </div>
         </div>
 
         <div id="about-page" style="display: none;">
@@ -2364,6 +2389,7 @@
             panicUrl = shownPanicUrl;
 
             applyTheme(localStorage.getItem('solus_theme'));
+            syncOfflineMode();
         }
 
         tabNameInput.oninput = (e) => {
@@ -2457,6 +2483,77 @@
             gameOverlayEnabled = this.checked;
             localStorage.setItem('solus_overlay', this.checked);
         };
+
+        // Offline Mode: a service worker (sw.js) caches the site and every game
+        // that is opened. The worker only exists while the setting is on;
+        // turning it off unregisters it and deletes its caches.
+        const offlineSupported = 'serviceWorker' in navigator && 'caches' in window && window.isSecureContext;
+        document.getElementById('offline-mode-toggle').onchange = async function() {
+            localStorage.setItem('solus_offlineMode', this.checked);
+            if (!this.checked) await clearOfflineCache();
+            syncOfflineMode();
+        };
+        document.getElementById('offline-clear-btn').onclick = async function() {
+            if (!confirm('Delete all cached games and site files? Game saves are not affected.')) return;
+            await clearOfflineCache();
+            syncOfflineMode();
+        };
+
+        async function clearOfflineCache() {
+            if (!('caches' in window)) return;
+            const names = await caches.keys();
+            await Promise.all(names.filter(n => n.startsWith('solus-')).map(n => caches.delete(n)));
+        }
+
+        function formatBytes(b) {
+            if (!b) return '0 MB';
+            if (b >= 1024 ** 3) return (b / 1024 ** 3).toFixed(2) + ' GB';
+            return Math.max(0.1, b / 1024 ** 2).toFixed(1) + ' MB';
+        }
+
+        async function updateOfflineUsage() {
+            const el = document.getElementById('offline-usage');
+            if (!offlineSupported) { el.textContent = 'Not supported in this browser'; return; }
+            const on = localStorage.getItem('solus_offlineMode') === 'true';
+            if (!on) { el.textContent = 'Offline Mode is off'; return; }
+            let used = 0;
+            try {
+                const est = await navigator.storage.estimate();
+                used = (est.usageDetails && est.usageDetails.caches) || est.usage || 0;
+            } catch (e) {}
+            el.textContent = 'Offline Mode is on' + (used ? ` - ${formatBytes(used)} cached` : ' - nothing cached yet');
+        }
+
+        // Applies the saved setting: registers or removes the worker. Called on
+        // load, on toggle and after a backup import.
+        async function syncOfflineMode() {
+            const toggle = document.getElementById('offline-mode-toggle');
+            const on = localStorage.getItem('solus_offlineMode') === 'true';
+            toggle.checked = on && offlineSupported;
+            toggle.disabled = !offlineSupported;
+            if (!offlineSupported) { updateOfflineUsage(); return; }
+            try {
+                if (on) {
+                    const reg = await navigator.serviceWorker.register('sw.js', { scope: './', updateViaCache: 'none' });
+                    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+                    const worker = reg.active || reg.waiting || reg.installing;
+                    const sendPrecache = (w) => w.postMessage({
+                        type: 'precache',
+                        urls: ['./', 'favicon.ico'].concat(staticGames.map(g => g.cover).filter(Boolean))
+                    });
+                    if (worker && worker.state === 'activated') sendPrecache(worker);
+                    else if (worker) worker.addEventListener('statechange', function onState() {
+                        if (worker.state === 'activated') { worker.removeEventListener('statechange', onState); sendPrecache(worker); }
+                    });
+                } else {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.filter(r => r.active && /\/sw\.js$/.test(r.active.scriptURL)).map(r => r.unregister()));
+                }
+            } catch (e) {
+                console.warn('Offline Mode:', e);
+            }
+            updateOfflineUsage();
+        }
        
         // Panic Key Implementation
         let panicKeyEnabled = false;
@@ -3200,6 +3297,9 @@
       { page: 'settings', title: 'Backup', target: '#settings-page .settings-group:nth-of-type(3)',
         body: 'Your library and saves exist only in this browser storage. <strong>Export</strong> downloads a full backup of games, saves and settings. ' +
               '<strong>Import</strong> restores it, for example on another device. Export before clearing site data.' },
+      { page: 'settings', title: 'Offline Mode', target: '#offline-mode-toggle', expand: '.setting-item',
+        body: 'Caches Solus MS and every game you open on this device, so games load faster and the ones you have already opened keep working without internet. ' +
+              'Cached games can take anywhere from 0-4GB of storage. <strong>Clear Cache</strong> frees the space any time, and game saves are never touched.' },
       { page: 'about', title: 'Themes', target: '#theme-select', expand: '.setting-item',
         require: { sel: '#theme-select', event: 'change', count: 1 },
         body: 'Three looks: <strong>Deep Blue</strong>, <strong>Light</strong> and <strong>Glass</strong>. Pick one and it applies immediately, this card included, and is saved on this device.' },
