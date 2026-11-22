@@ -82,6 +82,7 @@ I thought i would just write some stuff so i can remember when i did what since 
 8/11/26 - Ocarina of Time removed <br>
 8/11/26 - Meccha Chameleon added in universal release <br>
 8/11/26 - Slay The Spire preview re-release <br>
+22/11/26 - Solus MS 4.0.0 - Offline Mode for offline games + faster loading speeds. Crossy Road fixed, Undertale Yellow fixed, Cuphead fixed. Mario Kart DS removed. 
 
 
 
