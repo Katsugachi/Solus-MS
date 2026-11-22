@@ -2540,7 +2540,8 @@
             const on = localStorage.getItem('solus_offlineMode') === 'true';
             toggle.checked = on && offlineSupported;
             toggle.disabled = !offlineSupported;
-            if (!offlineSupported) { updateOfflineUsage(); return; }
+            updateOfflineUsage();
+            if (!offlineSupported) return;
             try {
                 if (on) {
                     const reg = await navigator.serviceWorker.register('sw.js', { scope: './', updateViaCache: 'none' });

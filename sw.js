@@ -57,12 +57,17 @@ self.addEventListener('activate', (event) => {
     })());
 });
 
-// The page sends cover images and other site files to warm the cache
+// Sent by the page every time Offline Mode is (re)enabled. Re-enabling while
+// old tabs keep a just-unregistered worker alive revives that same worker
+// without a new install/activate, so take control and recreate the caches
+// here too. Then warm the cache with cover images and other site files.
 self.addEventListener('message', (event) => {
     const data = event.data || {};
     if (data.type === 'precache' && Array.isArray(data.urls)) {
         event.waitUntil((async () => {
             const cache = await caches.open(SITE_CACHE);
+            await caches.open(GAME_CACHE);
+            await self.clients.claim();
             for (const u of data.urls) {
                 try {
                     const url = new URL(u, SCOPE);
