@@ -198,8 +198,8 @@ async function staleWhileRevalidate(key, cacheName, fetcher, keep) {
     return (await update) || (await matchOffline(key)) || Response.error();
 }
 
-async function networkFirst(req, cacheName, key, keep) {
-    const network = fetchAndStore(key, cacheName, () => fetch(req), keep);
+async function networkFirst(req, cacheName, key, keep, fetcher = () => fetch(req)) {
+    const network = fetchAndStore(key, cacheName, fetcher, keep);
     keep(network.catch(() => {}));
     try {
         return await withTimeout(network, NETWORK_TIMEOUT_MS);
@@ -377,6 +377,21 @@ async function handleMirror(req, url, keep) {
     const sameOrigin = upstreamUrl.origin === self.location.origin;
     const mode = sameOrigin ? 'same-origin' : 'cors';
     const fetchUpstream = (init = {}) => fetch(upstream, Object.assign({ mode, credentials: 'omit', redirect: 'follow' }, init));
+    // GitHub Pages rate-limits games that load thousands of files at once
+    // (429s without CORS headers surface as network errors), so retry
+    // while online to keep the cached copy complete
+    const fetchAsset = async () => {
+        for (let attempt = 0; ; attempt++) {
+            let res = null, err = null;
+            try { res = await fetchUpstream(); } catch (e) { err = e; }
+            if (res && res.status !== 429) return res;
+            if (attempt >= 3 || !self.navigator.onLine) {
+                if (err) throw err;
+                return res;
+            }
+            await new Promise(r => setTimeout(r, 1000 * 2 ** attempt + Math.random() * 500));
+        }
+    };
 
     if (req.method === 'HEAD') return handleHead(req, upstream, () => fetchUpstream({ method: 'HEAD' }));
     if (req.method !== 'GET') {
@@ -392,7 +407,7 @@ async function handleMirror(req, url, keep) {
         // Keep relative URLs resolving inside the mirror when GitHub Pages
         // redirects /repo to /repo/
         const fetcher = async () => {
-            const res = await fetchUpstream();
+            const res = await fetchAsset();
             if (res.redirected && res.url && res.url !== upstream) {
                 const err = new Error('redirect');
                 err.redirectTo = res.url;
@@ -409,8 +424,8 @@ async function handleMirror(req, url, keep) {
     }
 
     const res = isStatic(upstreamUrl)
-        ? await cacheFirst(upstream, GAME_CACHE, () => fetchUpstream(), keep)
-        : await networkFirst(new Request(upstream, { mode, credentials: 'omit' }), GAME_CACHE, upstream, keep);
+        ? await cacheFirst(upstream, GAME_CACHE, fetchAsset, keep)
+        : await networkFirst(new Request(upstream, { mode, credentials: 'omit' }), GAME_CACHE, upstream, keep, fetchAsset);
     return reframe(res);
 }
 
