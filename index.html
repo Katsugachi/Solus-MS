@@ -3431,9 +3431,9 @@
             r = { left: iL, top: iT, width: iR - iL, height: iB - iT };
           }
         }
-        var pad = 6;
-        var l = r.left + ox - pad, t = r.top + oy - pad;
-        var w = r.width + pad * 2, h = r.height + pad * 2;
+        var padX = 14, padY = 8;
+        var l = r.left + ox - padX, t = r.top + oy - padY;
+        var w = r.width + padX * 2, h = r.height + padY * 2;
         // Keep the spotlight inside the viewport: edge-flush targets (the
         // sidebar, the mobile bottom nav) pushed the padded ring past the
         // screen edge where it got clipped invisible.
