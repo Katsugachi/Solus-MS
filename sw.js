@@ -345,7 +345,8 @@ function syncXhrShim(MP, GC, SC) {
         let err = null;
         try { send.apply(this, arguments); } catch (e) { err = e; }
         if (!err && this.status >= 200 && this.status < 300) {
-            if (!known.has(s.key)) store(s, this);
+            // Re-store anything not found in the cache at page load (e.g. after Clear Cache)
+            if (!blobs[s.key]) store(s, this);
             return;
         }
         const b = blobs[s.key];
