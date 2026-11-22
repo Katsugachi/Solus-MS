@@ -62,6 +62,8 @@ const mw = document.getElementById("unity-mobile-warning");
 
 
 const base = "https://raw.githubusercontent.com/woahhcrackers/CupheadWeb/main/Build/";
+// raw.githubusercontent serves JS as text/plain + nosniff, so scripts come from jsDelivr
+const jsBase = "https://cdn.jsdelivr.net/gh/woahhcrackers/CupheadWeb@main/Build/";
 const name = "Cuphead";
 
 
@@ -108,12 +110,12 @@ const merge = async urls => {
   if (!(await ex(wasm))) wasm = await merge(await parts("wasm"));
 
   const sc = document.createElement("script");
-  sc.src = `${base}${name}.loader.js`;
+  sc.src = `${jsBase}${name}.loader.js`;
 
   sc.onload = () => {
     createUnityInstance(cv, {
       dataUrl: data,
-      frameworkUrl: `${base}${name}.framework.js`,
+      frameworkUrl: `${jsBase}${name}.framework.js`,
       codeUrl: wasm,
       streamingAssetsUrl: "StreamingAssets",
       companyName: "crackers",

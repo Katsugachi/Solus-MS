@@ -150,8 +150,17 @@ function fromMirror(href) {
 
 // ---------- caching strategies ----------
 
+// 404s are kept too so files a game probes for but never finds fail the same
+// way offline; they are only served when the network is unreachable
 function cacheable(res) {
-    return res && (res.ok || res.type === 'opaque') && res.status !== 206;
+    return res && (res.ok || res.type === 'opaque' || res.status === 404) && res.status !== 206;
+}
+
+// Offline fallback: games often add cache-busting queries (e.g. ?v=Date.now())
+// that never match the copy cached online, so retry ignoring the query string
+async function matchOffline(key) {
+    return (await caches.match(key, { ignoreVary: true })) ||
+        (await caches.match(key, { ignoreVary: true, ignoreSearch: true }));
 }
 
 async function putSafe(cacheName, key, res) {
@@ -174,19 +183,19 @@ async function fetchAndStore(key, cacheName, fetcher, keep) {
 
 async function cacheFirst(key, cacheName, fetcher, keep) {
     const hit = await caches.match(key, { ignoreVary: true });
-    if (hit) return hit;
+    if (hit && hit.status !== 404) return hit;
     try {
         return await fetchAndStore(key, cacheName, fetcher, keep);
     } catch (e) {
-        return Response.error();
+        return (await matchOffline(key)) || Response.error();
     }
 }
 
 async function staleWhileRevalidate(key, cacheName, fetcher, keep) {
     const hit = await caches.match(key, { ignoreVary: true });
     const update = fetchAndStore(key, cacheName, fetcher, keep).catch(() => null);
-    if (hit) { keep(update); return hit; }
-    return (await update) || Response.error();
+    if (hit && hit.status !== 404) { keep(update); return hit; }
+    return (await update) || (await matchOffline(key)) || Response.error();
 }
 
 async function networkFirst(req, cacheName, key, keep) {
@@ -195,7 +204,7 @@ async function networkFirst(req, cacheName, key, keep) {
     try {
         return await withTimeout(network, NETWORK_TIMEOUT_MS);
     } catch (e) {
-        const hit = await caches.match(key, { ignoreVary: true });
+        const hit = await matchOffline(key);
         if (hit) return hit;
         try { return await network; } catch (err) {
             return req.mode === 'navigate' ? offlinePage() : Response.error();
@@ -215,7 +224,7 @@ function withTimeout(promise, ms) {
 // page (even the 78 MB Minecraft one) costs a 304 instead of a re-download.
 async function serveDocument(req, key, cacheName, fetcher, keep, sameOrigin = true) {
     const hit = await caches.match(key, { ignoreVary: true });
-    if (hit) {
+    if (hit && hit.status !== 404) {
         keep(revalidate(key, cacheName, hit, fetcher, sameOrigin).catch(() => {}));
         return rewriteDocument(hit);
     }
@@ -224,6 +233,7 @@ async function serveDocument(req, key, cacheName, fetcher, keep, sameOrigin = tr
         return rewriteDocument(res);
     } catch (e) {
         if (e.redirectTo) throw e;
+        if (hit) return rewriteDocument(hit);
         return req.mode === 'navigate' ? offlinePage() : Response.error();
     }
 }
@@ -253,16 +263,102 @@ async function rewriteDocument(res) {
     const blob = await res.clone().blob();
     if (blob.size > MAX_REWRITE_BYTES) return res;
     const html = await blob.text();
-    const out = html.replace(/(<iframe\b[^>]*?\bsrc\s*=\s*)(["'])(https?:\/\/[^"']+)\2/gi, (m, pre, q, src) => {
+    let out = html.replace(/(<iframe\b[^>]*?\bsrc\s*=\s*)(["'])(https?:\/\/[^"']+)\2/gi, (m, pre, q, src) => {
         try {
             const u = new URL(src);
             if (!isMirrorable(u.href) || u.href.startsWith(SCOPE)) return m;
             return pre + q + toMirror(u.href) + q;
         } catch (e) { return m; }
     });
-    if (out === html) return res;
+    const head = out.match(/<head\b[^>]*>/i);
+    out = head ? out.replace(head[0], head[0] + SYNC_XHR_SHIM) : SYNC_XHR_SHIM + out;
     return new Response(out, { status: res.status, statusText: res.statusText, headers: cleanHeaders(res.headers) });
 }
+
+// Browsers do not send synchronous XHRs through a service worker, so games
+// that load files that way (e.g. Rain World's streaming assets) would hit the
+// Solus host for mirrored URLs and get nothing offline. This page-side shim
+// sends them to the real URL, keeps a copy in the game cache and replays that
+// copy from a blob URL when the network is unavailable.
+function syncXhrShim(MP, GC, SC) {
+    if (window.__solusSyncXhr) return;
+    const stats = window.__solusSyncXhr = { preloaded: 0, stored: 0, replayed: 0 };
+    const IDX = 'solus_syncxhr:' + location.pathname;
+    const blobs = {};
+    const keyOf = (abs) => {
+        const u = new URL(abs);
+        u.search = ''; u.hash = '';
+        return u.href.startsWith(MP) ? 'https://' + u.href.slice(MP.length) : u.href;
+    };
+    let known;
+    try { known = new Set(JSON.parse(localStorage.getItem(IDX) || '[]')); } catch (e) { known = new Set(); }
+    let saveTimer = null;
+    const saveIndex = () => {
+        if (saveTimer) return;
+        saveTimer = setTimeout(() => {
+            saveTimer = null;
+            try { localStorage.setItem(IDX, JSON.stringify(Array.from(known))); } catch (e) {}
+        }, 500);
+    };
+    if (window.caches && known.size) {
+        caches.open(GC).then((c) => known.forEach((k) => c.match(k)
+            .then((r) => r && r.blob())
+            .then((b) => { if (b) { blobs[k] = URL.createObjectURL(b); stats.preloaded++; } })
+            .catch(() => {}))).catch(() => {});
+    }
+    const store = (s, xhr) => {
+        if (!window.caches) return;
+        const type = xhr.getResponseHeader('content-type') || 'application/octet-stream';
+        let body = xhr.responseText;
+        if (s.mime && /x-user-defined/i.test(s.mime)) {
+            const bytes = new Uint8Array(body.length);
+            for (let i = 0; i < body.length; i++) bytes[i] = body.charCodeAt(i) & 255;
+            body = bytes;
+        }
+        caches.has(SC).then((on) => on && caches.open(GC)
+            .then((c) => c.put(s.key, new Response(body, { headers: { 'content-type': type } })))
+            .then(() => { known.add(s.key); stats.stored++; saveIndex(); }))
+            .catch(() => {});
+    };
+    const P = XMLHttpRequest.prototype, open = P.open, send = P.send, mime = P.overrideMimeType;
+    P.open = function (method, url, async) {
+        this.__solus = null;
+        const args = Array.prototype.slice.call(arguments);
+        if (args.length > 2 && async !== undefined && !async && String(method).toUpperCase() === 'GET') {
+            try {
+                const abs = new URL(url, location.href).href;
+                if (/^https?:/.test(abs)) {
+                    this.__solus = { key: keyOf(abs), mime: null };
+                    if (abs.startsWith(MP)) args[1] = 'https://' + abs.slice(MP.length);
+                }
+            } catch (e) {}
+        }
+        return open.apply(this, args);
+    };
+    P.overrideMimeType = function (type) {
+        if (this.__solus) this.__solus.mime = type;
+        return mime.apply(this, arguments);
+    };
+    P.send = function () {
+        const s = this.__solus;
+        if (!s) return send.apply(this, arguments);
+        let err = null;
+        try { send.apply(this, arguments); } catch (e) { err = e; }
+        if (!err && this.status >= 200 && this.status < 300) {
+            if (!known.has(s.key)) store(s, this);
+            return;
+        }
+        const b = blobs[s.key];
+        if (!b || (!err && this.status !== 0)) { if (err) throw err; return; }
+        this.__solus = null;
+        open.call(this, 'GET', b, false);
+        if (s.mime) mime.call(this, s.mime);
+        stats.replayed++;
+        return send.call(this);
+    };
+}
+const SYNC_XHR_SHIM = '<script>(' + syncXhrShim + ')(' +
+    [MIRROR_PREFIX, GAME_CACHE, SITE_CACHE].map(v => JSON.stringify(v)).join(',') + ')</script>';
 
 function cleanHeaders(headers) {
     const h = new Headers(headers);
@@ -329,7 +425,7 @@ async function handleHead(req, key, fetcher) {
     try {
         return await (fetcher ? fetcher() : fetch(req));
     } catch (e) {
-        const hit = await caches.match(key, { ignoreVary: true });
+        const hit = await matchOffline(key);
         if (hit && hit.type !== 'opaque') return new Response(null, { status: hit.status, headers: hit.headers });
         // Games probe for optional files with HEAD (e.g. split .data chunks);
         // anything never cached is reported missing rather than a network error
